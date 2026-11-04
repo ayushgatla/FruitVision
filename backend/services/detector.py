@@ -30,12 +30,23 @@ PRODUCE_SET = {
 }
 
 NON_PRODUCE_TRIGGERS = [
+    # Electronics, screens & devices
+    'television', 'screen', 'monitor', 'web site', 'laptop', 'cellular telephone', 'phone',
+    'keyboard', 'mouse', 'desktop', 'computer',
+    # Humans, apparel, accessories & headwear
+    'sunglass', 'sunglasses', 'wig', 'shower cap', 'lab coat', 'sweatshirt', 'suit',
+    'jersey', 'trench coat', 'neck brace', 'bow tie', 'necktie', 'cowboy hat', 'hair slide',
+    'mask', 'backpack', 't-shirt', 'gown', 'cloak', 'pajama', 'jean', 'sock', 'shoe', 'sneaker',
+    'spectacles', 'glasses', 'face powder', 'swimming cap', 'bathing cap',
+    # Indoor / Furniture / Room / Architecture
+    'sliding door', 'window shade', 'window screen', 'shower curtain', 'wardrobe', 'couch',
+    'desk', 'dining table', 'chair', 'bookcase', 'door', 'wall', 'room', 'curtain', 'pillow',
+    # Vehicles & Animals
     'car', 'truck', 'bus', 'vehicle', 'bicycle', 'motorcycle', 'airplane', 'boat',
-    'dog', 'cat', 'horse', 'bird', 'cellular telephone', 'phone', 'laptop', 'computer',
-    'keyboard', 'mouse', 'screen', 'television', 'monitor', 'shoe', 'sneaker', 'sandal',
-    'boot', 'suit', 'jersey', 'desk', 'chair', 'table', 'couch', 'bottle', 'cup', 'mug',
-    'pen', 'pencil', 'scissors', 'screwdriver', 'web site', 'menu', 'envelope', 'packet',
-    'book', 'comic book', 'binder', 'cellular', 'notebook', 'wallet', 'clock', 'watch'
+    'dog', 'cat', 'horse', 'bird',
+    # Everyday non-produce tools & objects
+    'clock', 'digital clock', 'analog clock', 'stopwatch', 'bottle', 'cup', 'mug',
+    'pen', 'pencil', 'scissors', 'screwdriver', 'envelope', 'packet', 'wallet'
 ]
 
 class FruitVisionDetector:
@@ -220,10 +231,21 @@ class FruitVisionDetector:
 
                 top5_indices = torch.topk(out, 5).indices.tolist()
                 has_produce_in_top5 = any(self.imagenet_cats[idx].lower() in PRODUCE_SET for idx in top5_indices)
-                is_explicit_non_fruit = any(trigger in top_cat for trigger in NON_PRODUCE_TRIGGERS)
+                is_top1_non_produce = any(trigger in top_cat for trigger in NON_PRODUCE_TRIGGERS)
 
-                if is_explicit_non_fruit and top_prob.item() > 0.30 and not has_produce_in_top5:
-                    return False, f"Identified non-fruit object ({top_cat})", float(round(top_prob.item(), 4))
+                non_produce_top5_sum = sum(
+                    out[idx].item() for idx in top5_indices 
+                    if any(trig in self.imagenet_cats[idx].lower() for trig in NON_PRODUCE_TRIGGERS)
+                )
+
+                # Reject non-produce if:
+                # 1) Top-1 class is explicitly non-produce (conf >= 12%) and NO produce in top 5
+                # 2) OR cumulative top-5 non-produce confidence >= 25% and NO produce in top 5
+                if not has_produce_in_top5:
+                    if is_top1_non_produce and top_prob.item() >= 0.12:
+                        return False, f"Identified non-fruit object ({top_cat})", float(round(max(0.95, top_prob.item()), 4))
+                    if non_produce_top5_sum >= 0.25:
+                        return False, f"Identified non-fruit scene ({top_cat})", float(round(max(0.95, non_produce_top5_sum), 4))
             except Exception as e:
                 pass
 
