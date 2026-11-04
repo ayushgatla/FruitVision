@@ -199,6 +199,12 @@ export default function InspectionHub({ onInspectionDone }) {
                 [FRESH APPLE]
               </button>
               <button
+                onClick={() => handleLoadSingleSample('sample_good_red_apple.jpg')}
+                className="px-2 py-0.5 border border-neutral-700 hover:border-white text-[11px] text-neutral-300 hover:text-white cursor-pointer"
+              >
+                [RED APPLE (NO LEAF)]
+              </button>
+              <button
                 onClick={() => handleLoadSingleSample('sample_good_orange.jpg')}
                 className="px-2 py-0.5 border border-neutral-700 hover:border-white text-[11px] text-neutral-300 hover:text-white cursor-pointer"
               >

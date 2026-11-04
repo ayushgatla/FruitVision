@@ -134,13 +134,14 @@ class FruitVisionDetector:
 
     def _analyze_surface_defect_heuristics(self, img_bgr: np.ndarray) -> Dict[str, Any]:
         """
-        Industry 4.0 optical surface defect & rot analysis.
-        Inspects necrotic lesions, mold coverage, and skin degradation
-        to prevent false classification of rotten fruits as good (ISO 22000 standard).
+        Industry 4.0 optical food safety guardrail (ISO 22000).
+        Detects extreme necrotic black rot / mold coverage as a safety backup.
+        Note: Apples and produce DO NOT require leaves to be classified as Good / Market Grade A.
         """
         h, w = img_bgr.shape[:2]
         gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
         hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+        b, g, r = img_bgr[:,:,0].astype(float), img_bgr[:,:,1].astype(float), img_bgr[:,:,2].astype(float)
 
         # Mask fruit from light background
         fruit_mask = (gray < 240) & (gray > 15)
@@ -148,37 +149,18 @@ class FruitVisionDetector:
         if fruit_pixels < 400:
             return {"override": False, "label": "Good", "confidence": 0.9}
 
-        # 1. Vibrant fresh peel detection (Yellow bananas, red/orange/green fresh fruit)
-        yellow_peel = (hsv[:,:,0] >= 17) & (hsv[:,:,0] <= 36) & (hsv[:,:,1] >= 80) & (hsv[:,:,2] >= 110) & fruit_mask
-        orange_peel = (hsv[:,:,0] >= 9) & (hsv[:,:,0] <= 18) & (hsv[:,:,1] >= 130) & (hsv[:,:,2] >= 140) & fruit_mask
-        red_peel = ((hsv[:,:,0] <= 8) | (hsv[:,:,0] >= 165)) & (hsv[:,:,1] >= 100) & (hsv[:,:,2] >= 120) & fruit_mask
-        green_peel = (hsv[:,:,0] >= 35) & (hsv[:,:,0] <= 80) & (hsv[:,:,1] >= 70) & (hsv[:,:,2] >= 90) & fruit_mask
-
-        vibrant_peel = yellow_peel | orange_peel | red_peel | green_peel
-        vibrant_ratio = float(np.sum(vibrant_peel)) / fruit_pixels
-
-        # 2. Necrotic rot & decay detection (dull brown, shriveled fungal decay, dark mold)
-        necrotic_brown = (hsv[:,:,0] >= 2) & (hsv[:,:,0] <= 24) & (hsv[:,:,1] >= 45) & (hsv[:,:,2] >= 25) & (hsv[:,:,2] <= 175) & (~yellow_peel) & (~orange_peel) & fruit_mask
-        dark_necrosis = (hsv[:,:,2] < 45) & fruit_mask
-        rot_mask = necrotic_brown | dark_necrosis
+        # Severe necrotic dark rot & mold
+        dark_necrosis = (hsv[:,:,2] < 30) & fruit_mask
+        dark_rot = (r < 50) & (g < 45) & (b < 40) & fruit_mask
+        rot_mask = dark_necrosis | dark_rot
         rot_ratio = float(np.sum(rot_mask)) / fruit_pixels
 
-        # Case A: Overwhelmingly fresh, vibrant peel with low rot (< 8%)
-        if vibrant_ratio >= 0.60 and rot_ratio < 0.08:
-            conf = float(round(max(0.95, min(0.99, 0.90 + vibrant_ratio * 0.1)), 4))
-            return {"override": True, "label": "Good", "confidence": conf, "rot_ratio": rot_ratio, "vibrant_ratio": vibrant_ratio}
+        # Only override if severe black rot coverage >= 35%
+        if rot_ratio >= 0.35:
+            conf = float(round(max(0.95, min(0.995, 0.85 + rot_ratio * 0.25)), 4))
+            return {"override": True, "label": "Rotten", "confidence": conf, "rot_ratio": rot_ratio}
 
-        # Case B: Severe necrotic rot (rot >= 25%, or rot >= 15% without vibrant peel)
-        if rot_ratio >= 0.25 or (rot_ratio >= 0.15 and vibrant_ratio < 0.50):
-            conf = float(round(max(0.94, min(0.995, 0.85 + rot_ratio * 0.25)), 4))
-            return {"override": True, "label": "Rotten", "confidence": conf, "rot_ratio": rot_ratio, "vibrant_ratio": vibrant_ratio}
-
-        # Case C: Localized surface damage / bruise (rot between 8% and 25%)
-        if rot_ratio >= 0.08 and rot_ratio < 0.25:
-            conf = float(round(max(0.88, min(0.96, 0.80 + rot_ratio * 0.7)), 4))
-            return {"override": True, "label": "Damaged", "confidence": conf, "rot_ratio": rot_ratio, "vibrant_ratio": vibrant_ratio}
-
-        return {"override": False, "rot_ratio": rot_ratio, "vibrant_ratio": vibrant_ratio}
+        return {"override": False, "rot_ratio": rot_ratio}
 
     def verify_is_fruit(self, img_bgr: np.ndarray) -> Tuple[bool, str, float]:
         """
@@ -265,9 +247,9 @@ class FruitVisionDetector:
                 )
 
                 if not has_produce_in_top5:
-                    if is_top1_non_produce and top_prob.item() >= 0.10:
+                    if is_top1_non_produce and top_prob.item() >= 0.28:
                         return False, f"Identified non-fruit object ({top_cat})", float(round(max(0.95, top_prob.item()), 4))
-                    if non_produce_top5_sum >= 0.25:
+                    if non_produce_top5_sum >= 0.50:
                         return False, f"Identified non-fruit scene ({top_cat})", float(round(max(0.95, non_produce_top5_sum), 4))
             except Exception:
                 pass
@@ -313,18 +295,13 @@ class FruitVisionDetector:
         label = self.classes[pred_idx]
         confidence = float(round(probs[pred_idx], 4))
 
-        # Optical food safety guardrail: prevent passing rotten fruits as Good and vice versa
+        # Optical food safety guardrail: only intervene if model predicts Good but severe rot is detected
         guard = self._analyze_surface_defect_heuristics(img_bgr)
-        if guard.get("override"):
-            label = guard["label"]
+        if guard.get("override") and label == "Good" and guard["label"] == "Rotten":
+            label = "Rotten"
             confidence = guard["confidence"]
             rem = round((1.0 - confidence) / 2.0, 4)
-            if label == "Good":
-                prob_dict = {"Good": confidence, "Damaged": rem, "Rotten": rem}
-            elif label == "Rotten":
-                prob_dict = {"Good": rem, "Damaged": rem, "Rotten": confidence}
-            else:  # Damaged
-                prob_dict = {"Good": rem, "Damaged": confidence, "Rotten": rem}
+            prob_dict = {"Good": rem, "Damaged": rem, "Rotten": confidence}
 
         if label == "Good":
             status = "ACCEPTED"

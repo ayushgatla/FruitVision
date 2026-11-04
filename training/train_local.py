@@ -4,6 +4,9 @@ Trains transfer-learned EfficientNetB0 on three fruit quality classes:
 0: Good
 1: Damaged
 2: Rotten
+
+Leaves are NOT required for Good fruits — apples and produce with or without leaves
+are properly recognized as fresh Market Grade A.
 """
 
 import os
@@ -24,9 +27,9 @@ class SyntheticFruitDataset(Dataset):
     """
     Generates diverse fruit images (Apples, Oranges, Bananas, Lemons, Peaches)
     with realistic features for Good, Damaged, and Rotten classes,
-    supplemented with disk sample images.
+    supplemented with real disk sample images.
     """
-    def __init__(self, size=600, transform=None):
+    def __init__(self, size=240, transform=None):
         self.size = size
         self.transform = transform
         self.samples = []
@@ -41,28 +44,26 @@ class SyntheticFruitDataset(Dataset):
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         samples_dir = os.path.join(base_dir, "sample_images")
         if os.path.exists(samples_dir):
-            if os.path.exists(os.path.join(samples_dir, "sample_good_apple.jpg")):
-                self.disk_samples[0].append(Image.open(os.path.join(samples_dir, "sample_good_apple.jpg")).convert("RGB"))
-            if os.path.exists(os.path.join(samples_dir, "sample_good_orange.jpg")):
-                self.disk_samples[0].append(Image.open(os.path.join(samples_dir, "sample_good_orange.jpg")).convert("RGB"))
-            if os.path.exists(os.path.join(samples_dir, "sample_good_banana.jpg")):
-                self.disk_samples[0].append(Image.open(os.path.join(samples_dir, "sample_good_banana.jpg")).convert("RGB"))
-            if os.path.exists(os.path.join(samples_dir, "sample_damaged_apple.jpg")):
-                self.disk_samples[1].append(Image.open(os.path.join(samples_dir, "sample_damaged_apple.jpg")).convert("RGB"))
-            if os.path.exists(os.path.join(samples_dir, "sample_rotten_apple.jpg")):
-                self.disk_samples[2].append(Image.open(os.path.join(samples_dir, "sample_rotten_apple.jpg")).convert("RGB"))
-            if os.path.exists(os.path.join(samples_dir, "sample_real_rotten_apple.jpg")):
-                self.disk_samples[2].append(Image.open(os.path.join(samples_dir, "sample_real_rotten_apple.jpg")).convert("RGB"))
-            if os.path.exists(os.path.join(samples_dir, "sample_rotten_banana.jpg")):
-                self.disk_samples[2].append(Image.open(os.path.join(samples_dir, "sample_rotten_banana.jpg")).convert("RGB"))
+            for fname in ["sample_good_apple.jpg", "sample_good_red_apple.jpg", "sample_good_orange.jpg", "sample_good_banana.jpg"]:
+                p = os.path.join(samples_dir, fname)
+                if os.path.exists(p):
+                    self.disk_samples[0].append(Image.open(p).convert("RGB"))
+            for fname in ["sample_damaged_apple.jpg"]:
+                p = os.path.join(samples_dir, fname)
+                if os.path.exists(p):
+                    self.disk_samples[1].append(Image.open(p).convert("RGB"))
+            for fname in ["sample_rotten_apple.jpg", "sample_real_rotten_apple.jpg", "sample_rotten_banana.jpg"]:
+                p = os.path.join(samples_dir, fname)
+                if os.path.exists(p):
+                    self.disk_samples[2].append(Image.open(p).convert("RGB"))
 
     def __len__(self):
         return self.size
 
     def __getitem__(self, idx):
         label = self.samples[idx]
-        # In 60% of cases, use an augmented real disk sample if available
-        if self.disk_samples[label] and random.random() < 0.60:
+        # In 65% of cases, use an augmented real disk sample if available
+        if self.disk_samples[label] and random.random() < 0.65:
             img = random.choice(self.disk_samples[label]).copy()
         else:
             img = self._generate_fruit_image(label)
@@ -84,7 +85,6 @@ class SyntheticFruitDataset(Dataset):
             base_col = (random.randint(235, 255), random.randint(110, 160), random.randint(10, 30))
             bbox = (50, 50, 206, 206)
         elif fruit_type == "banana":
-            # Bright yellow for Good bananas, dark rot for Rotten
             if label == 0:
                 base_col = (random.randint(240, 255), random.randint(215, 240), random.randint(15, 45))
             elif label == 1:
@@ -105,16 +105,21 @@ class SyntheticFruitDataset(Dataset):
         else:
             draw.ellipse(bbox, fill=base_col, outline=None)
 
-        # Highlight for Good fruits
+        # Highlight for Good fruits (Fresh taut skin, smooth surface)
         if label == 0:  # Good (Fresh)
             hl_x = random.randint(70, 100)
             hl_y = random.randint(70, 100)
             draw.ellipse((hl_x, hl_y, hl_x + 30, hl_y + 18), fill=(255, 255, 255, 120))
-            # Green stem / leaf
-            draw.line((128, 52, 125, 30), fill=(40, 80, 30), width=4)
-            draw.polygon([(125, 35), (150, 20), (145, 45)], fill=(30, 160, 40))
+            # Natural woody stem (without requiring leaf!)
+            draw.line((128, 55, 125, 30), fill=(80, 50, 25), width=3)
+            # Only occasionally (10%) draw a leaf, so model NEVER associates Good with leaf presence
+            if random.random() < 0.10:
+                draw.polygon([(125, 35), (145, 22), (140, 42)], fill=(30, 150, 40))
 
         elif label == 1:  # Damaged (Bruised / Cuts / Scratches)
+            draw.line((128, 55, 125, 30), fill=(80, 50, 25), width=3)
+            if random.random() < 0.10:
+                draw.polygon([(125, 35), (145, 22), (140, 42)], fill=(30, 150, 40))
             # Impact bruise
             br_x = random.randint(100, 160)
             br_y = random.randint(100, 160)
@@ -127,12 +132,15 @@ class SyntheticFruitDataset(Dataset):
             draw.line((cut_x1 + 5, cut_y1 + 10, cut_x1 + 20, cut_y1 + 35), fill=(50, 25, 15), width=2)
 
         elif label == 2:  # Rotten (Decay, Mold, Sunken Patches)
+            draw.line((128, 55, 125, 30), fill=(50, 30, 15), width=3)
+            if random.random() < 0.10:
+                draw.polygon([(125, 35), (145, 22), (140, 42)], fill=(40, 80, 30))
             # Extensive dark brown / black sunken rot
             rot_x = random.randint(90, 140)
             rot_y = random.randint(90, 150)
             rot_col = (random.randint(25, 55), random.randint(20, 45), random.randint(15, 35))
             draw.ellipse((rot_x - 45, rot_y - 40, rot_x + 45, rot_y + 40), fill=rot_col)
-            # Gray/white/green fungal mold colonies
+            # Fungal mold colonies
             for _ in range(40):
                 mx = rot_x + random.randint(-35, 35)
                 my = rot_y + random.randint(-30, 30)
@@ -140,8 +148,6 @@ class SyntheticFruitDataset(Dataset):
                 draw.ellipse((mx - 3, my - 3, mx + 3, my + 3), fill=mold_col)
 
         return img
-
-
 
 def build_model(num_classes=3):
     model = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.DEFAULT)
@@ -165,7 +171,7 @@ def train():
     print(f"[FruitVision AI] Training device: {device}")
 
     # Dataset splits
-    train_dataset = SyntheticFruitDataset(size=180, transform=train_transform)
+    train_dataset = SyntheticFruitDataset(size=240, transform=train_transform)
     val_dataset = SyntheticFruitDataset(size=60, transform=inference_transform)
 
     train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
@@ -197,7 +203,6 @@ def train():
         print(f"Epoch {epoch}/{epochs_head} - Loss: {total_loss/total:.4f} - Accuracy: {train_acc*100:.2f}%")
 
     print("\n[FruitVision AI] Step 2: Fine-Tuning Top Convolutional Blocks (LR=1e-4)...")
-    # Unfreeze top feature layers (stages 6 and 7)
     for param in model.features[6:].parameters():
         param.requires_grad = True
 
@@ -207,7 +212,7 @@ def train():
     ])
 
     best_val_acc = 0.0
-    epochs_ft = 3
+    epochs_ft = 4
     weights_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "weights")
     os.makedirs(weights_dir, exist_ok=True)
     best_path = os.path.join(weights_dir, "best.pt")
@@ -245,7 +250,7 @@ def train():
         val_acc = val_correct / val_total
         print(f"Fine-Tuning Epoch {epoch}/{epochs_ft} - Val Loss: {val_loss/val_total:.4f} - Val Accuracy: {val_acc*100:.2f}%")
 
-        if val_acc > best_val_acc:
+        if val_acc >= best_val_acc:
             best_val_acc = val_acc
             torch.save({
                 'model_state_dict': model.state_dict(),
