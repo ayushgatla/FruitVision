@@ -30,6 +30,13 @@ PRODUCE_SET = {
 }
 
 NON_PRODUCE_TRIGGERS = [
+    # Vehicles & wheeled devices
+    'unicycle', 'bicycle', 'tricycle', 'cart', 'wheelbarrow', 'car', 'truck', 'bus', 'vehicle',
+    'motorcycle', 'airplane', 'boat', 'tractor', 'trailer',
+    # Construction, industrial & architecture
+    'pier', 'dock', 'lumbermill', 'drilling platform', 'platform', 'pole', 'bridge', 'dam',
+    'scaffolding', 'crane', 'bannister', 'fence', 'building', 'tower', 'steel', 'maze',
+    'broom', 'shovel', 'rail', 'chimney', 'monolith', 'megalith',
     # Electronics, screens & devices
     'television', 'screen', 'monitor', 'web site', 'laptop', 'cellular telephone', 'phone',
     'keyboard', 'mouse', 'desktop', 'computer',
@@ -38,11 +45,10 @@ NON_PRODUCE_TRIGGERS = [
     'jersey', 'trench coat', 'neck brace', 'bow tie', 'necktie', 'cowboy hat', 'hair slide',
     'mask', 'backpack', 't-shirt', 'gown', 'cloak', 'pajama', 'jean', 'sock', 'shoe', 'sneaker',
     'spectacles', 'glasses', 'face powder', 'swimming cap', 'bathing cap',
-    # Indoor / Furniture / Room / Architecture
+    # Indoor / Furniture / Room
     'sliding door', 'window shade', 'window screen', 'shower curtain', 'wardrobe', 'couch',
     'desk', 'dining table', 'chair', 'bookcase', 'door', 'wall', 'room', 'curtain', 'pillow',
-    # Vehicles & Animals
-    'car', 'truck', 'bus', 'vehicle', 'bicycle', 'motorcycle', 'airplane', 'boat',
+    # Animals
     'dog', 'cat', 'horse', 'bird',
     # Everyday non-produce tools & objects
     'clock', 'digital clock', 'analog clock', 'stopwatch', 'bottle', 'cup', 'mug',
@@ -199,6 +205,31 @@ class FruitVisionDetector:
         if edge_ratio > 0.16 and total_non_bg > 0.75 * total_pixels:
             return False, "Document or text screenshot detected", 0.98
 
+        # 3. Full-Frame Scene / Landscape Detection
+        # Produce inspection items are isolated foreground objects on an inspection surface.
+        # Outdoor scenes, construction sites, and landscapes feature extreme border variance and sky gradients.
+        border_pixels = np.concatenate([
+            gray[0:max(1, int(h*0.05)), :].flatten(),
+            gray[-max(1, int(h*0.05)):, :].flatten(),
+            gray[:, 0:max(1, int(w*0.05))].flatten(),
+            gray[:, -max(1, int(w*0.05)):].flatten()
+        ])
+        border_std = float(np.std(border_pixels))
+        top_pixels = gray[0:max(1, int(h*0.1)), :].flatten()
+        bottom_pixels = gray[-max(1, int(h*0.1)):, :].flatten()
+        top_bottom_diff = abs(float(np.mean(top_pixels)) - float(np.mean(bottom_pixels)))
+
+        # Outdoor blue sky detection in upper 40% of image
+        top_hsv = hsv[:int(h*0.4), :]
+        sky_mask = (top_hsv[:,:,0] >= 95) & (top_hsv[:,:,0] <= 130) & (top_hsv[:,:,1] >= 20) & (top_hsv[:,:,2] >= 80)
+        sky_ratio = float(np.sum(sky_mask)) / max(1, top_hsv.shape[0] * top_hsv.shape[1])
+
+        if sky_ratio > 0.15 and border_std > 30.0:
+            return False, "Outdoor landscape / sky scene detected (non-produce)", 0.98
+
+        if border_std > 45.0 and top_bottom_diff > 50.0:
+            return False, "Complex outdoor / industrial scene detected (non-produce)", 0.97
+
         # 3. Organic fruit color ranges:
         # Yellow (14-38), Orange (8-18), Red (0-9 or 160-179), Green (35-85), Brown/Decay (2-25)
         organic_hues = (
@@ -242,7 +273,7 @@ class FruitVisionDetector:
                 # 1) Top-1 class is explicitly non-produce (conf >= 12%) and NO produce in top 5
                 # 2) OR cumulative top-5 non-produce confidence >= 25% and NO produce in top 5
                 if not has_produce_in_top5:
-                    if is_top1_non_produce and top_prob.item() >= 0.12:
+                    if is_top1_non_produce and top_prob.item() >= 0.10:
                         return False, f"Identified non-fruit object ({top_cat})", float(round(max(0.95, top_prob.item()), 4))
                     if non_produce_top5_sum >= 0.25:
                         return False, f"Identified non-fruit scene ({top_cat})", float(round(max(0.95, non_produce_top5_sum), 4))
