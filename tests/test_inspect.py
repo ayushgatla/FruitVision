@@ -93,3 +93,4 @@ def test_inspect_live_frame_invalid_base64_returns_400(client):
     res = client.post("/api/inspect/frame", json=payload)
     assert res.status_code == 400
     assert "Invalid frame" in res.json()["detail"]
+

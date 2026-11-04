@@ -17,3 +17,4 @@ def test_health_check_endpoint(client):
     assert data["db_status"] == "connected"
     assert isinstance(data["classes"], list)
     assert len(data["classes"]) >= 3
+

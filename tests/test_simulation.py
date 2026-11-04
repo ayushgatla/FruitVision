@@ -62,3 +62,4 @@ def test_simulation_stats_and_reset(client):
 
     stats_after = client.get("/api/simulation/stats").json()
     assert stats_after["total_sorted"] == 0
+

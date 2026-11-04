@@ -89,3 +89,4 @@ def dummy_jpeg_bytes(dummy_image_bgr):
 def dummy_base64_frame(dummy_image_bgr):
     """Encodes dummy BGR image into base64 data URI."""
     return helpers.numpy_to_base64(dummy_image_bgr)
+
