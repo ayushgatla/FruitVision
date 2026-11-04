@@ -1,12 +1,13 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.database.database import init_db
 from backend.services.detector import get_detector
 from backend.utils.helpers import ensure_directories, STATIC_DIR
+from backend.utils.auth import verify_admin_key
 from backend.api import api_router
 
 @asynccontextmanager
@@ -31,13 +32,29 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware for local Vite frontend
+# CORS security configuration (HIGH-04)
+DEFAULT_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+env_cors = os.getenv("ALLOWED_ORIGINS") or os.getenv("FRUITVISION_CORS_ORIGINS")
+if env_cors and env_cors.strip():
+    allowed_origins = [origin.strip() for origin in env_cors.split(",") if origin.strip()]
+else:
+    allowed_origins = DEFAULT_ALLOWED_ORIGINS
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key", "X-Admin-Key", "Accept"],
+    max_age=600,
 )
 
 # Mount static files
@@ -70,8 +87,9 @@ def health_check():
         "version": "1.0.0"
     }
 
-@app.post("/api/reload-model")
+@app.post("/api/reload-model", dependencies=[Depends(verify_admin_key)])
 def reload_model():
+    """Reload custom model weights (Admin authenticated)."""
     detector = get_detector()
     reloaded = detector.reload_custom_weights()
     return {
@@ -92,4 +110,3 @@ if __name__ == "__main__":
 
     print(f"[FruitVision AI] Starting server on http://127.0.0.1:{port}...")
     uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=True)
-

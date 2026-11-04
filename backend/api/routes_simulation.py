@@ -1,7 +1,8 @@
 import os
 import cv2
 import random
-from datetime import datetime
+import threading
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import Dict, Any
@@ -13,14 +14,15 @@ from backend.utils.helpers import SAMPLES_DIR
 
 router = APIRouter()
 
-# In-memory session stats
+# Thread-safe in-memory session stats
+simulation_lock = threading.Lock()
 simulation_counters = {
     "total_sorted": 0,
     "good_count": 0,
     "damaged_count": 0,
     "rotten_count": 0,
     "current_speed": 1.0,
-    "start_time": datetime.utcnow().isoformat()
+    "start_time": datetime.now(timezone.utc).isoformat()
 }
 
 SAMPLE_FILES = [
@@ -32,23 +34,22 @@ SAMPLE_FILES = [
     ("sample_rotten_banana.jpg", "Banana")
 ]
 
+
 @router.get("/sample")
 def get_simulation_fruit(
     fruit_choice: str = Query("random"),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     """
     Feeds the next fruit item on the conveyor belt,
     runs actual EfficientNetB0 CNN inference,
     and returns sorting decision and gate routing.
     """
-    global simulation_counters
-
     # Pick sample image
     if fruit_choice != "random" and any(fruit_choice in f[0] for f in SAMPLE_FILES):
         sample_entry = next(f for f in SAMPLE_FILES if fruit_choice in f[0])
     else:
-        # Realistic industrial distribution: 70% Good, 20% Damaged, 10% Rotten
+        # Realistic industrial distribution: 65% Good, 20% Damaged, 15% Rotten
         rand_roll = random.random()
         if rand_roll < 0.65:
             candidates = [f for f in SAMPLE_FILES if "good" in f[0]]
@@ -69,36 +70,43 @@ def get_simulation_fruit(
     if img_bgr is not None:
         pred = detector.predict_single_crop(img_bgr)
     else:
-        # Fallback if file missing
+        # Safe fallback if asset missing: flag for secondary inspection, NEVER pass as Grade A Good
+        expected_label = "Rotten" if "rotten" in filename.lower() else ("Damaged" if "damaged" in filename.lower() else "Damaged")
         pred = {
-            "label": "Good",
-            "confidence": 0.95,
-            "probabilities": {"Good": 0.95, "Damaged": 0.03, "Rotten": 0.02},
-            "status": "ACCEPTED",
-            "suggested_action": "Direct to Automated Packaging Line"
+            "label": expected_label,
+            "confidence": 0.85,
+            "probabilities": {
+                "Good": 0.05,
+                "Damaged": 0.85 if expected_label == "Damaged" else 0.10,
+                "Rotten": 0.85 if expected_label == "Rotten" else 0.10
+            },
+            "status": "SECONDARY_INSPECTION" if expected_label == "Damaged" else "REJECTED",
+            "suggested_action": "Manual Inspection Required - Sample Image Missing"
         }
 
     label = pred["label"]
     conf = pred["confidence"]
 
-    # Determine Industrial Sorting Gate
-    if label == "Good":
-        sorting_gate = "GATE_1_ACCEPTED"
-        action = "Accepted: Divert to Primary Retail Packaging Line"
-        simulation_counters["good_count"] += 1
-    elif label == "Damaged":
-        sorting_gate = "GATE_2_SECONDARY"
-        action = "Secondary: Route to Manual Trimming & Puree Station"
-        simulation_counters["damaged_count"] += 1
-    else: # Rotten
-        sorting_gate = "GATE_3_REJECTED"
-        action = "Rejected: Pneumatic Ejection to Organic Bio-Waste Bin"
-        simulation_counters["rotten_count"] += 1
+    # Determine Industrial Sorting Gate and thread-safely increment counters
+    with simulation_lock:
+        if label == "Good":
+            sorting_gate = "GATE_1_ACCEPTED"
+            action = "Accepted: Divert to Primary Retail Packaging Line"
+            simulation_counters["good_count"] += 1
+        elif label == "Damaged":
+            sorting_gate = "GATE_2_SECONDARY"
+            action = "Secondary: Route to Manual Trimming & Puree Station"
+            simulation_counters["damaged_count"] += 1
+        else: # Rotten
+            sorting_gate = "GATE_3_REJECTED"
+            action = "Rejected: Pneumatic Ejection to Organic Bio-Waste Bin"
+            simulation_counters["rotten_count"] += 1
 
-    simulation_counters["total_sorted"] += 1
+        simulation_counters["total_sorted"] += 1
+        current_counters = dict(simulation_counters)
 
     # Unique tracking item ID
-    item_id = f"FRUIT-{datetime.utcnow().strftime('%H%M%S')}-{random.randint(100, 999)}"
+    item_id = f"FRUIT-{datetime.now(timezone.utc).strftime('%H%M%S')}-{random.randint(100, 999)}"
 
     # Save conveyor event to DB
     event = ConveyorEvent(
@@ -137,17 +145,21 @@ def get_simulation_fruit(
         "sorting_gate": sorting_gate,
         "action": action,
         "image_url": f"/static/samples/{filename}",
-        "timestamp": datetime.utcnow().isoformat(),
-        "live_counters": simulation_counters
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "live_counters": current_counters
     }
 
+
 @router.get("/stats")
-def get_simulation_stats():
-    """Retrieve live conveyor simulation counters."""
-    total = simulation_counters["total_sorted"]
-    good = simulation_counters["good_count"]
-    damaged = simulation_counters["damaged_count"]
-    rotten = simulation_counters["rotten_count"]
+def get_simulation_stats() -> Dict[str, Any]:
+    """Retrieve live conveyor simulation counters (Thread-safe)."""
+    with simulation_lock:
+        total = simulation_counters["total_sorted"]
+        good = simulation_counters["good_count"]
+        damaged = simulation_counters["damaged_count"]
+        rotten = simulation_counters["rotten_count"]
+        speed = simulation_counters["current_speed"]
+
     acceptance = round((good / total * 100), 1) if total > 0 else 100.0
 
     return {
@@ -156,20 +168,19 @@ def get_simulation_stats():
         "damaged_count": damaged,
         "rotten_count": rotten,
         "acceptance_rate": acceptance,
-        "speed": simulation_counters["current_speed"]
+        "speed": speed
     }
+
 
 @router.post("/reset")
-def reset_simulation_stats():
-    """Reset the conveyor belt simulation counters."""
-    global simulation_counters
-    simulation_counters = {
-        "total_sorted": 0,
-        "good_count": 0,
-        "damaged_count": 0,
-        "rotten_count": 0,
-        "current_speed": 1.0,
-        "start_time": datetime.utcnow().isoformat()
-    }
-    return {"status": "success", "message": "Simulation counters reset."}
+def reset_simulation_stats() -> Dict[str, Any]:
+    """Reset the conveyor belt simulation counters (Thread-safe)."""
+    with simulation_lock:
+        simulation_counters["total_sorted"] = 0
+        simulation_counters["good_count"] = 0
+        simulation_counters["damaged_count"] = 0
+        simulation_counters["rotten_count"] = 0
+        simulation_counters["current_speed"] = 1.0
+        simulation_counters["start_time"] = datetime.now(timezone.utc).isoformat()
 
+    return {"status": "success", "message": "Simulation counters reset."}

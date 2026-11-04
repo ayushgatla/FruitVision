@@ -26,6 +26,18 @@ def generate_samples(output_dirs):
         cv2.circle(img_good_orange, (200, 105), 10, (30, 120, 30), -1)
         cv2.imwrite(os.path.join(out_dir, "sample_good_orange.jpg"), img_good_orange)
 
+        # 2b. Damaged Orange (Bruised / Cut / Peel lesion)
+        img_damaged_orange = np.full((400, 400, 3), (242, 242, 242), dtype=np.uint8)
+        cv2.circle(img_damaged_orange, (200, 210), 115, (0, 140, 245), -1)
+        # Green button stem
+        cv2.circle(img_damaged_orange, (200, 105), 10, (30, 120, 30), -1)
+        # Bruised necrotic rind lesion
+        cv2.ellipse(img_damaged_orange, (235, 220), (45, 32), 15, 0, 360, (15, 55, 95), -1)
+        # Peel puncture fissures
+        cv2.line(img_damaged_orange, (160, 210), (190, 245), (10, 35, 65), 4)
+        cv2.line(img_damaged_orange, (170, 220), (180, 260), (15, 40, 75), 3)
+        cv2.imwrite(os.path.join(out_dir, "sample_damaged_orange.jpg"), img_damaged_orange)
+
         # 3. Damaged Apple (Bruised / Cut)
         img_damaged = np.full((400, 400, 3), (242, 242, 242), dtype=np.uint8)
         cv2.circle(img_damaged, (200, 220), 120, (30, 30, 200), -1)
@@ -89,7 +101,6 @@ def generate_samples(output_dirs):
     print("Sample fruit images generated successfully!")
 
 if __name__ == "__main__":
-    import sys
     base = os.path.dirname(os.path.abspath(__file__))
     dirs = [
         os.path.join(base, "sample_images"),

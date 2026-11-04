@@ -5,13 +5,23 @@ const api = axios.create({
   timeout: 60000,
 });
 
+const DEFAULT_ADMIN_KEY = 'fruitvision-admin-dev-key-change-in-prod';
+const ADMIN_API_KEY = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ADMIN_KEY) || DEFAULT_ADMIN_KEY;
+
+const getAdminHeaders = () => ({
+  'X-API-Key': ADMIN_API_KEY,
+  'X-Admin-Key': ADMIN_API_KEY,
+});
+
 export const getHealth = async () => {
   const res = await api.get('/health');
   return res.data;
 };
 
 export const reloadModel = async () => {
-  const res = await api.post('/reload-model');
+  const res = await api.post('/reload-model', {}, {
+    headers: getAdminHeaders(),
+  });
   return res.data;
 };
 
@@ -31,12 +41,16 @@ export const getHistory = async (params = {}) => {
 };
 
 export const deleteHistoryRecord = async (id) => {
-  const res = await api.delete(`/history/${id}`);
+  const res = await api.delete(`/history/${id}`, {
+    headers: getAdminHeaders(),
+  });
   return res.data;
 };
 
 export const purgeAllHistory = async () => {
-  const res = await api.delete('/history');
+  const res = await api.delete('/history', {
+    headers: getAdminHeaders(),
+  });
   return res.data;
 };
 
@@ -85,4 +99,3 @@ export const resetSimulation = async () => {
   const res = await api.post('/simulation/reset');
   return res.data;
 };
-

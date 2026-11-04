@@ -65,6 +65,22 @@ export default function LiveMonitor({ onAlertLogged }) {
     setCurrentPrediction(null);
   };
 
+  // Unmount cleanup: immediately stop hardware camera tracks and clear FPS interval
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
+      if (fpsTimerRef.current) {
+        clearInterval(fpsTimerRef.current);
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
   // Processing loop
   useEffect(() => {
     if (!isActive) return;

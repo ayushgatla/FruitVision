@@ -1,53 +1,52 @@
 import os
-import cv2
-import numpy as np
-from datetime import datetime
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
+import logging
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Dict, Any
 from pydantic import BaseModel
 
 from backend.database.database import get_db
 from backend.database.models import FruitInspection
 from backend.services.detector import get_detector
-from backend.utils.helpers import UPLOADS_DIR, base64_to_numpy, ensure_directories
+from backend.utils.helpers import (
+    base64_to_numpy,
+    ensure_directories,
+    process_and_save_upload,
+    draw_single_annotation,
+    save_evidence_snapshot,
+)
 from backend.models.schemas import SingleInspectionResponse, MultiFruitInspectionResponse
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
+
 
 class FramePayload(BaseModel):
     frame_data: str
     source_id: Optional[str] = "webcam"
 
+
 @router.post("/image", response_model=SingleInspectionResponse)
 @router.post("/detect/image", response_model=SingleInspectionResponse)
-async def inspect_single_image(
+def inspect_single_image(
     file: UploadFile = File(...),
     notes: Optional[str] = Form(None),
     db: Session = Depends(get_db)
-):
-    """Inspect and classify a single fruit image using EfficientNetB0."""
+) -> Dict[str, Any]:
+    """
+    Inspect and classify a single fruit image using EfficientNetB0.
+    Runs synchronously in Starlette threadpool worker to avoid blocking asyncio event loop.
+    """
     ensure_directories()
     detector = get_detector()
 
-    # Read uploaded file
-    contents = await file.read()
-    nparr = np.frombuffer(contents, np.uint8)
-    img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-    if img_bgr is None:
-        raise HTTPException(status_code=400, detail="Invalid image file format.")
-
-    # Save original upload
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    upload_filename = f"upload_{ts}_{file.filename}"
-    upload_path = os.path.join(UPLOADS_DIR, upload_filename)
-    with open(upload_path, "wb") as f:
-        f.write(contents)
-    upload_url = f"/static/uploads/{upload_filename}"
+    # Process and validate uploaded file (sanitizes filename, validates extension & size, decodes in memory)
+    upload_path, upload_url, img_bgr = process_and_save_upload(file, prefix="upload")
 
     # Perform detection and classification
-    result = detector.detect_and_classify_image(img_bgr, source_id=file.filename)
+    safe_source_name = os.path.basename(file.filename or "upload.jpg")
+    result = detector.detect_and_classify_image(img_bgr, source_id=safe_source_name)
 
     # Save record to SQLite database
     inspection = FruitInspection(
@@ -60,7 +59,7 @@ async def inspect_single_image(
         damaged_count=1 if result["predicted_class"] == "Damaged" else 0,
         rotten_count=1 if result["predicted_class"] == "Rotten" else 0,
         source_type="single_upload",
-        notes=notes or f"Inspection of {file.filename}",
+        notes=notes or f"Inspection of {safe_source_name}",
         evidence_path=result["annotated_image_url"]
     )
     db.add(inspection)
@@ -81,39 +80,33 @@ async def inspect_single_image(
         "model_version": result["model_version"]
     }
 
+
 @router.post("/multi", response_model=MultiFruitInspectionResponse)
-async def inspect_multiple_fruits(
+def inspect_multiple_fruits(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
-):
-    """Detect and classify multiple fruits in a single image."""
+) -> Dict[str, Any]:
+    """
+    Detect and classify multiple fruits in a single image.
+    Runs synchronously in Starlette threadpool worker to avoid blocking asyncio event loop.
+    """
     ensure_directories()
     detector = get_detector()
 
-    contents = await file.read()
-    nparr = np.frombuffer(contents, np.uint8)
-    img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-    if img_bgr is None:
-        raise HTTPException(status_code=400, detail="Invalid image file format.")
-
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    upload_filename = f"multi_{ts}_{file.filename}"
-    upload_path = os.path.join(UPLOADS_DIR, upload_filename)
-    with open(upload_path, "wb") as f:
-        f.write(contents)
-    upload_url = f"/static/uploads/{upload_filename}"
+    # Process and validate uploaded file
+    upload_path, upload_url, img_bgr = process_and_save_upload(file, prefix="multi")
 
     # Perform multi-fruit inspection
     multi_res = detector.detect_multiple_fruits(img_bgr)
 
-    # Save to SQLite database
+    # Determine primary status
     primary_pred = "Good"
     if multi_res["rotten_count"] > 0:
         primary_pred = "Rotten"
     elif multi_res["damaged_count"] > 0:
         primary_pred = "Damaged"
 
+    # Save to SQLite database
     inspection = FruitInspection(
         image_path=upload_url,
         predicted_class=primary_pred,
@@ -145,16 +138,22 @@ async def inspect_multiple_fruits(
         "timestamp": inspection.inspection_timestamp.isoformat()
     }
 
-@router.post("/frame")
-async def inspect_live_frame(payload: FramePayload, db: Session = Depends(get_db)):
-    """Process live video stream or webcam frame with EfficientNetB0 HUD."""
-    try:
-        img_bgr = base64_to_numpy(payload.frame_data)
-        if img_bgr is None:
-            raise HTTPException(status_code=400, detail="Invalid frame base64 encoding.")
 
+@router.post("/frame")
+def inspect_live_frame(payload: FramePayload, db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """
+    Process live video stream or webcam frame with EfficientNetB0 HUD.
+    Runs synchronously in Starlette threadpool worker to avoid blocking asyncio event loop.
+    """
+    img_bgr = base64_to_numpy(payload.frame_data)
+    if img_bgr is None or img_bgr.size == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid frame: base64 payload could not be decoded as an image."
+        )
+
+    try:
         detector = get_detector()
-        # Single crop or multi inspection depending on frame composition
         pred = detector.predict_single_crop(img_bgr)
 
         # Log defect alert to database if confidence is high (> 80%)
@@ -163,8 +162,8 @@ async def inspect_live_frame(payload: FramePayload, db: Session = Depends(get_db
             try:
                 annotated = draw_single_annotation(img_bgr, pred["label"], pred["confidence"])
                 _, evidence_url = save_evidence_snapshot(annotated, prefix="live_alert")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Could not persist live evidence snapshot: {e}")
 
             inspection = FruitInspection(
                 image_path=evidence_url,
@@ -190,6 +189,11 @@ async def inspect_live_frame(payload: FramePayload, db: Session = Depends(get_db
             "probabilities": pred["probabilities"],
             "alert": pred["label"] in ["Damaged", "Rotten"]
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+        logger.exception(f"Unexpected error processing live video frame: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while processing the video frame."
+        )

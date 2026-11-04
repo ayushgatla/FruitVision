@@ -1,58 +1,122 @@
 {
-  "timestamp": "2026-11-04T07:02:26.178332",
-  "images_tested": 6,
-  "total_fruits_inspected": 9,
-  "good_count": 4,
-  "damaged_count": 2,
-  "rotten_count": 3,
-  "acceptance_rate": 44.4,
-  "avg_latency_ms": 45.4,
-  "db_records": 27,
+  "timestamp": "2026-11-04T12:53:34.227255",
+  "images_tested": 14,
+  "total_fruits_inspected": 17,
+  "good_count": 7,
+  "damaged_count": 3,
+  "rotten_count": 7,
+  "acceptance_rate": 41.2,
+  "avg_latency_ms": 126.0,
+  "db_records": 1020,
   "results": [
     {
       "index": 1,
-      "file": "sample_damaged_apple.jpg",
-      "latency_ms": 72.1,
-      "classification": "Damaged",
-      "confidence_or_rate": 99.6,
-      "status": "SECONDARY_INSPECTION"
+      "file": "images(10).jpg",
+      "latency_ms": 255.4,
+      "classification": "Good",
+      "confidence_or_rate": 43.8,
+      "status": "ACCEPTED"
     },
     {
       "index": 2,
-      "file": "sample_good_apple.jpg",
-      "latency_ms": 34.8,
-      "classification": "Good",
-      "confidence_or_rate": 100.0,
-      "status": "ACCEPTED"
+      "file": "images(6).jpg",
+      "latency_ms": 127.5,
+      "classification": "Rotten",
+      "confidence_or_rate": 97.9,
+      "status": "REJECTED"
     },
     {
       "index": 3,
-      "file": "sample_good_orange.jpg",
-      "latency_ms": 30.2,
-      "classification": "Good",
-      "confidence_or_rate": 99.9,
-      "status": "ACCEPTED"
-    },
-    {
-      "index": 4,
-      "file": "sample_multi_fruits.jpg",
-      "latency_ms": 79.3,
-      "classification": "Batch (4 fruits)",
-      "confidence_or_rate": 50.0,
-      "status": "CRITICAL_DEFECTS_DETECTED"
-    },
-    {
-      "index": 5,
-      "file": "sample_rotten_apple.jpg",
-      "latency_ms": 29.8,
+      "file": "images(7).jpg",
+      "latency_ms": 114.9,
       "classification": "Rotten",
       "confidence_or_rate": 99.5,
       "status": "REJECTED"
     },
     {
+      "index": 4,
+      "file": "images(8).jpg",
+      "latency_ms": 101.1,
+      "classification": "Good",
+      "confidence_or_rate": 99.0,
+      "status": "ACCEPTED"
+    },
+    {
+      "index": 5,
+      "file": "sample_damaged_apple.jpg",
+      "latency_ms": 110.2,
+      "classification": "Damaged",
+      "confidence_or_rate": 88.1,
+      "status": "SECONDARY_INSPECTION"
+    },
+    {
       "index": 6,
+      "file": "sample_damaged_orange.jpg",
+      "latency_ms": 100.0,
+      "classification": "Damaged",
+      "confidence_or_rate": 88.3,
+      "status": "SECONDARY_INSPECTION"
+    },
+    {
+      "index": 7,
+      "file": "sample_good_apple.jpg",
+      "latency_ms": 121.2,
+      "classification": "Good",
+      "confidence_or_rate": 99.0,
+      "status": "ACCEPTED"
+    },
+    {
+      "index": 8,
+      "file": "sample_good_banana.jpg",
+      "latency_ms": 116.8,
+      "classification": "Good",
+      "confidence_or_rate": 98.6,
+      "status": "ACCEPTED"
+    },
+    {
+      "index": 9,
+      "file": "sample_good_orange.jpg",
+      "latency_ms": 106.2,
+      "classification": "Good",
+      "confidence_or_rate": 99.0,
+      "status": "ACCEPTED"
+    },
+    {
+      "index": 10,
+      "file": "sample_multi_fruits.jpg",
+      "latency_ms": 274.7,
+      "classification": "Batch (4 fruits)",
+      "confidence_or_rate": 50.0,
+      "status": "CRITICAL_DEFECTS_DETECTED"
+    },
+    {
+      "index": 11,
+      "file": "sample_not_fruit.jpg",
+      "latency_ms": 26.5,
+      "classification": "Not Fruits",
+      "confidence_or_rate": 98.0,
+      "status": "NON_PRODUCE"
+    },
+    {
+      "index": 12,
+      "file": "sample_real_rotten_apple.jpg",
+      "latency_ms": 101.8,
+      "classification": "Rotten",
+      "confidence_or_rate": 97.9,
+      "status": "REJECTED"
+    },
+    {
+      "index": 13,
+      "file": "sample_rotten_apple.jpg",
+      "latency_ms": 103.0,
+      "classification": "Rotten",
+      "confidence_or_rate": 99.5,
+      "status": "REJECTED"
+    },
+    {
+      "index": 14,
       "file": "sample_rotten_banana.jpg",
-      "latency_ms": 26.2,
+      "latency_ms": 104.3,
       "classification": "Rotten",
       "confidence_or_rate": 99.5,
       "status": "REJECTED"

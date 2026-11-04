@@ -1,13 +1,14 @@
-from datetime import datetime
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
-from typing import Optional, List
+from typing import Optional, Dict, Any
 
 from backend.database.database import get_db
 from backend.database.models import FruitInspection
+from backend.utils.auth import verify_admin_key
 
 router = APIRouter()
+
 
 @router.get("")
 def get_inspection_history(
@@ -16,7 +17,7 @@ def get_inspection_history(
     category: Optional[str] = Query(None), # "Good", "Damaged", "Rotten"
     search: Optional[str] = Query(None),
     db: Session = Depends(get_db)
-):
+) -> Dict[str, Any]:
     """Retrieve indexed inspection history records with search and category filters."""
     query = db.query(FruitInspection)
 
@@ -64,21 +65,25 @@ def get_inspection_history(
         "records": records
     }
 
-@router.delete("/{inspection_id}")
-def delete_inspection_record(inspection_id: int, db: Session = Depends(get_db)):
-    """Delete a specific inspection record from SQLite."""
+
+@router.delete("/{inspection_id}", dependencies=[Depends(verify_admin_key)])
+def delete_inspection_record(inspection_id: int, db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Delete a specific inspection record from SQLite (Admin authenticated)."""
     record = db.query(FruitInspection).filter(FruitInspection.id == inspection_id).first()
     if not record:
-        raise HTTPException(status_code=404, detail="Inspection record not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Inspection record not found."
+        )
 
     db.delete(record)
     db.commit()
     return {"status": "success", "deleted_id": inspection_id}
 
-@router.delete("")
-def purge_all_inspections(db: Session = Depends(get_db)):
-    """Purge all inspection records from SQLite."""
+
+@router.delete("", dependencies=[Depends(verify_admin_key)])
+def purge_all_inspections(db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Purge all inspection records from SQLite (Admin authenticated)."""
     deleted_count = db.query(FruitInspection).delete()
     db.commit()
     return {"status": "success", "deleted_count": deleted_count}
-

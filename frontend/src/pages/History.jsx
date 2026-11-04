@@ -1,6 +1,28 @@
 import React, { useState } from 'react';
 import HistoryTable from '../components/HistoryTable';
 
+/**
+ * Sanitize cell values against CSV / Formula Injection (DDE) and format for RFC 4180.
+ * Neutralizes leading formula triggers (=, +, -, @, tab, CR) by prepending a single quote (').
+ */
+function sanitizeCsvCell(value) {
+  if (value === null || value === undefined) {
+    return '""';
+  }
+  let str = String(value);
+
+  // OWASP Formula Injection characters: =, +, -, @, tab, CR
+  const DANGEROUS_TRIGGERS = ['=', '+', '-', '@', '\t', '\r'];
+  const trimmed = str.trimStart();
+  if (trimmed.length > 0 && DANGEROUS_TRIGGERS.includes(trimmed[0])) {
+    str = "'" + str; // Prepend apostrophe to neutralize formula execution in Excel/Calc
+  }
+
+  // RFC 4180 escaping: double internal quotes and enclose in quotes
+  const escaped = str.replace(/"/g, '""');
+  return `"${escaped}"`;
+}
+
 export default function History({ 
   records = [], 
   onDeleteRecord, 
@@ -26,25 +48,32 @@ export default function History({
 
   const handleExportCSV = () => {
     if (filteredRecords.length === 0) return;
-    const headers = ["ID", "Timestamp", "Class", "Confidence", "Status", "Items", "Notes"];
-    const rows = filteredRecords.map(r => [
-      r.id,
-      r.timestamp,
-      r.predicted_class,
-      r.confidence,
-      r.inspection_status,
-      r.fruit_count || 1,
-      `"${r.notes || ''}"`
-    ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const headers = ["ID", "Timestamp", "Class", "Confidence", "Status", "Items", "Notes"];
+    const headerLine = headers.map(h => `"${h}"`).join(",");
+
+    const rows = filteredRecords.map(r => [
+      sanitizeCsvCell(r.id),
+      sanitizeCsvCell(r.timestamp),
+      sanitizeCsvCell(r.predicted_class),
+      sanitizeCsvCell(r.confidence),
+      sanitizeCsvCell(r.inspection_status),
+      sanitizeCsvCell(r.fruit_count || 1),
+      sanitizeCsvCell(r.notes || '')
+    ].join(","));
+
+    const csvText = [headerLine, ...rows].join("\r\n");
+
+    // UTF-8 BOM (\uFEFF) forces Excel to interpret UTF-8 encoding correctly
+    const blob = new Blob(["\uFEFF" + csvText], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.href = url;
     link.setAttribute("download", `FruitVision_Audit_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -144,4 +173,3 @@ export default function History({
     </div>
   );
 }
-
