@@ -161,7 +161,8 @@ export default function ConveyorSimulation({ onSimulationUpdate }) {
             onChange={(e) => setFruitFeed(e.target.value)}
             className="px-2 py-1 bg-black border border-neutral-700 text-xs text-neutral-300 font-mono focus:outline-none focus:border-white cursor-pointer"
           >
-            <option value="random">FEED: [RANDOM PRODUCTION MIX]</option>
+            <option value="random">FEED: [ALL SAMPLE_IMAGES (DYNAMIC MIX)]</option>
+            <option value="cycle">FEED: [ALL SAMPLE_IMAGES (SEQUENTIAL ROTATION)]</option>
             <option value="good">FEED: [GOOD FRUITS ONLY]</option>
             <option value="damaged">FEED: [DAMAGED SAMPLES]</option>
             <option value="rotten">FEED: [ROTTEN DEFECTS]</option>
@@ -329,6 +330,7 @@ export default function ConveyorSimulation({ onSimulationUpdate }) {
           {/* Belt status pill */}
           <div className="mt-2 flex items-center justify-between text-[11px] text-neutral-500">
             <span>DRIVE: BRUSHLESS SERVO MOTOR (SPEED: {speed}X)</span>
+            <span className="text-neutral-400">FEED POOL: {currentFruit?.available_samples_count || '13+'} IMAGES IN `sample_images/`</span>
             <span>STATUS: {isRunning ? '[RUNNING]' : '[PAUSED]'}</span>
           </div>
         </div>
@@ -357,6 +359,10 @@ export default function ConveyorSimulation({ onSimulationUpdate }) {
                       className="w-16 h-16 object-contain border border-neutral-800 bg-neutral-950 p-1"
                     />
                     <div className="space-y-1">
+                      <div className="text-xs">
+                        <span className="text-neutral-500">FILE: </span>
+                        <span className="text-neutral-300 font-bold truncate max-w-[200px]">{currentFruit.sample_filename || currentFruit.fruit_type}</span>
+                      </div>
                       <div className="text-xs">
                         <span className="text-neutral-500">TYPE: </span>
                         <span className="text-white font-bold">{currentFruit.fruit_type.toUpperCase()}</span>

@@ -15,8 +15,11 @@ export default defineConfig({
       '/static': {
         target: 'http://127.0.0.1:8001',
         changeOrigin: true
+      },
+      '/sample_images': {
+        target: 'http://127.0.0.1:8001',
+        changeOrigin: true
       }
     }
   }
 })
-

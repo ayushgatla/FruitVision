@@ -44,6 +44,11 @@ app.add_middleware(
 ensure_directories()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SAMPLE_IMAGES_DIR = os.path.join(PROJECT_ROOT, "sample_images")
+os.makedirs(SAMPLE_IMAGES_DIR, exist_ok=True)
+app.mount("/sample_images", StaticFiles(directory=SAMPLE_IMAGES_DIR), name="sample_images")
+
 # Include API routes
 app.include_router(api_router)
 
