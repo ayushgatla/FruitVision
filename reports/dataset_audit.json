@@ -1,0 +1,183 @@
+{
+  "dataset_directory": "C:\\Users\\ramsa\\Desktop\\FruitVision\\dataset",
+  "audit_timestamp": "2026-11-04T14:59:36Z",
+  "scan_duration_seconds": 10.61,
+  "has_predefined_splits": false,
+  "total_images": 6654,
+  "classes": [
+    "Apple_Bad",
+    "Apple_Good",
+    "Banana_Bad",
+    "Banana_Good",
+    "Lime_Bad",
+    "Lime_Good"
+  ],
+  "class_counts": {
+    "Apple_Bad": 1141,
+    "Apple_Good": 1134,
+    "Banana_Bad": 1087,
+    "Banana_Good": 1113,
+    "Lime_Bad": 1085,
+    "Lime_Good": 1094
+  },
+  "corrupt_files_count": 0,
+  "corrupt_files": [],
+  "exact_duplicates_count": 0,
+  "exact_duplicates": [],
+  "near_duplicate_sample_matches": 597,
+  "near_duplicate_samples": [
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG20200728175957.jpg",
+      "file2": "IMG20200728175958.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG20200728181153.jpg",
+      "file2": "IMG20200728181155.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG20200728181200.jpg",
+      "file2": "IMG20200728181201.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG20200728181225.jpg",
+      "file2": "IMG20200728181226.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG20200728181238.jpg",
+      "file2": "IMG20200728181239.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG20200728181318.jpg",
+      "file2": "IMG20200728181318_01.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG20200728181330.jpg",
+      "file2": "IMG20200728181331.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175205.jpg",
+      "file2": "IMG_20190824_175206.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175206_1.jpg",
+      "file2": "IMG_20190824_175207.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175206_1.jpg",
+      "file2": "IMG_20190824_175207_1.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175206_1.jpg",
+      "file2": "IMG_20190824_175208.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175206_1.jpg",
+      "file2": "IMG_20190824_175208_1.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175206_1.jpg",
+      "file2": "IMG_20190824_175209.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175206_1.jpg",
+      "file2": "IMG_20190824_175209_1.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175235_1.jpg",
+      "file2": "IMG_20190824_175236.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175235_1.jpg",
+      "file2": "IMG_20190824_175236_1.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175236.jpg",
+      "file2": "IMG_20190824_175237.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175241.jpg",
+      "file2": "IMG_20190824_175242.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175243.jpg",
+      "file2": "IMG_20190824_175244.jpg"
+    },
+    {
+      "class": "Apple_Bad",
+      "file1": "IMG_20190824_175243_1.jpg",
+      "file2": "IMG_20190824_175245.jpg"
+    }
+  ],
+  "file_formats": {
+    "JPEG": 6654
+  },
+  "color_modes": {
+    "RGB": 6654
+  },
+  "dimensions": {
+    "min": [
+      144,
+      144
+    ],
+    "max": [
+      256,
+      256
+    ],
+    "mean": [
+      234.1,
+      247.4
+    ],
+    "common_resolutions": [
+      {
+        "resolution": "256x256",
+        "count": 3490,
+        "percentage": 52.45
+      },
+      {
+        "resolution": "192x256",
+        "count": 2260,
+        "percentage": 33.96
+      },
+      {
+        "resolution": "256x192",
+        "count": 883,
+        "percentage": 13.27
+      },
+      {
+        "resolution": "144x256",
+        "count": 12,
+        "percentage": 0.18
+      },
+      {
+        "resolution": "256x144",
+        "count": 9,
+        "percentage": 0.14
+      }
+    ]
+  },
+  "sequence_and_augmentation_analysis": {
+    "files_with_augmented_suffix_e.g._01": 93,
+    "unique_capture_stems": 6563,
+    "stems_with_multiple_images": 91,
+    "leakage_risk_warning": "High risk of data leakage if split purely randomly without grouping consecutive/augmented frames"
+  }
+}

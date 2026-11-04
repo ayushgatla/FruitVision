@@ -1,7 +1,7 @@
 # FruitVision AI — Intelligent Fruit Quality Inspection & Sorting System
 
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%200.110-009688.svg)](https://fastapi.tiangolo.com/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%200.162-009688.svg)](https://fastapi.tiangolo.com/)
 [![PyTorch](https://img.shields.io/badge/Deep%20Learning-PyTorch%20%7C%20EfficientNetB0-EE4C2C.svg)](https://pytorch.org/)
 [![React 19](https://img.shields.io/badge/Frontend-React%2019%20%2B%20Tailwind%20v4-61DAFB.svg)](https://react.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -12,35 +12,34 @@ An Industry 4.0 automated fruit quality inspection, defect analysis, and conveyo
 
 ## System Architecture & Features
 
-- **Transfer-Learned EfficientNetB0**: Pretrained on ImageNet and fine-tuned for tri-class produce grading (`Good`, `Damaged`, `Rotten`).
+- **Transfer-Learned EfficientNetB0**: Pretrained on ImageNet-1K and fine-tuned using a 2-stage transfer learning pipeline on empirical fruit quality data (`Apple_Good`, `Apple_Bad`, `Banana_Good`, `Banana_Bad`).
+- **Empirical Dataset Pipeline**: 6,654 real organic fruit images with group-aware stratified splitting that eliminates data leakage from consecutive burst frames and augmentations.
+- **Fruit-Specific Conveyor Lines**: Real-time simulated sorting conveyor supporting dedicated **Apple Inspection Line**, **Banana Inspection Line**, and Full Production Mix with 3-way pneumatic divert gates (`GATE_1_ACCEPTED`, `GATE_2_SECONDARY`, `GATE_3_REJECTED`).
 - **Out-of-Distribution "Not Fruits" Detector**: Multi-layer optical rejection engine that identifies non-produce artifacts (electronics, documents, vehicles, blanks) and flags them as `[NOT FRUITS]`.
-- **Interactive Conveyor Belt Simulation**: Real-time animated sorting belt with optical laser scanner, pneumatic divert gates (`GATE_1_ACCEPTED`, `GATE_2_SECONDARY`, `GATE_3_REJECTED`), live bin telemetry, and speed toggles (1x, 2x, 4x).
+- **Dual-Tier Quality Mapping**: Maps 4-class fine-grained produce quality predictions to canonical industrial grades (`ACCEPTED`, `SECONDARY_INSPECTION`, `REJECTED`) without breaking downstream schemas.
 - **Multi-Fruit Batch Segmentation**: OpenCV contour detection and individual fruit isolation for conveyor batch processing.
-- **Real-Time Webcam Monitor**: Live video feed processing with bounding-box HUD overlay and automatic defect logging.
+- **Real-Time Webcam Monitor**: Live video feed processing with HUD overlay and automatic defect logging.
 - **Persistent SQLite Audit Logging**: Complete historical traceability with indexed search, status filters, CSV export, and annotated visual evidence snapshots.
-- **Telemetry & Quality Analytics**: 7-day acceptance trajectory line charts, defect distribution breakdowns, and held-out model confusion matrix.
+- **Empirical Telemetry & Quality Analytics**: Real held-out confusion matrix, per-class precision/recall, 7-day acceptance trajectories, and latency benchmarking.
 
 ---
 
-## Prerequisites
+## Documentation Guides
 
-- **Python**: Version `3.10` or higher
-- **Node.js**: Version `18.0` or higher (with `npm`)
-- **Git**
+- [Dataset Guide (`docs/DATASET_GUIDE.md`)](docs/DATASET_GUIDE.md): Full dataset audit, class counts, image geometries, and group-aware leakage prevention.
+- [Model Training Guide (`docs/MODEL_TRAINING_GUIDE.md`)](docs/MODEL_TRAINING_GUIDE.md): EfficientNet-B0 architecture, 2-stage transfer learning, hyperparameter specs, and training results.
+- [Model Evaluation Guide (`docs/MODEL_EVALUATION_GUIDE.md`)](docs/MODEL_EVALUATION_GUIDE.md): Held-out test performance, per-class metrics, confusion matrix, and latency benchmarks.
+- [ML Implementation Audit (`reports/ML_IMPLEMENTATION_AUDIT.md`)](reports/ML_IMPLEMENTATION_AUDIT.md): Comprehensive verification against task acceptance criteria.
 
 ---
 
 ## Commands to Run the Project
 
 ### Option A: One-Click Quick Start (Windows)
-
-Run the included automated launcher in the repository root:
-
 ```cmd
 start.bat
 ```
-
-This automatically starts:
+Starts:
 - **FastAPI Backend Server** on `http://127.0.0.1:8001`
 - **Vite React Frontend** on `http://localhost:5174`
 
@@ -48,83 +47,50 @@ This automatically starts:
 
 ### Option B: Manual Setup & Execution
 
-#### 1. Clone the Repository
+#### 1. Backend Setup & Startup
 ```bash
-git clone https://github.com/ayushgatla/FruitVision.git
-cd FruitVision
-```
-
-#### 2. Backend Setup & Startup
-Open a terminal in the project root directory:
-
-```bash
-# Create a Python virtual environment (optional but recommended)
-python -m venv venv
-
-# Activate the virtual environment
-# On Windows:
+# Activate virtual environment
 venv\Scripts\activate
-# On Linux / macOS:
-# source venv/bin/activate
 
-# Install backend dependencies
-pip install -r backend/requirements.txt
-
-# Start the FastAPI backend server (Runs on Port 8001)
+# Start FastAPI backend server
 python -m uvicorn backend.main:app --host 127.0.0.1 --port 8001 --reload
 ```
+> Interactive OpenAPI Swagger Docs: [http://127.0.0.1:8001/docs](http://127.0.0.1:8001/docs)
 
-> **Backend Verification**:
-> - API Root / Health Check: [http://127.0.0.1:8001/api/health](http://127.0.0.1:8001/api/health)
-> - Interactive OpenAPI Swagger Docs: [http://127.0.0.1:8001/docs](http://127.0.0.1:8001/docs)
-
----
-
-#### 3. Frontend Setup & Startup
-Open a **second terminal** in the `frontend` folder:
-
+#### 2. Frontend Setup & Startup
 ```bash
 cd frontend
-
-# Install Node.js dependencies
-npm install
-
-# Launch Vite development server (Runs on Port 5174)
 npm run dev
 ```
-
-> **Web Application Access**:
-> Open your browser and navigate to **[http://localhost:5174](http://localhost:5174)**.
+> Web Application: [http://localhost:5174](http://localhost:5174)
 
 ---
 
-## Running Model Training & Evaluation
+## Dataset Preparation, Training & Evaluation
 
-### Local Model Calibration
-To train or recalibrate the EfficientNetB0 classification head locally on sample images:
-
+### 1. Group-Aware Dataset Preparation
+Prepares ~800 images across 4 classes with strict 0% data leakage:
 ```bash
-python -m training.train_local
+python scripts/prepare_dataset.py --source dataset --output dataset/processed --samples-per-class 200 --seed 42
 ```
 
-### Held-Out Test Evaluation & Metric Curves
-To evaluate model performance and regenerate confusion matrix and loss/accuracy curves:
-
+### 2. Two-Stage EfficientNet-B0 Training
+Trains classification head (Stage 1) and fine-tunes upper convolutional blocks (Stage 2):
 ```bash
-python -m training.evaluate
+python -m training.train_local --batch-size 16 --epochs1 4 --epochs2 6
 ```
+Outputs saved to `weights/best.pt` and `weights/fruit_efficientnet_b0.pt`.
 
-Generated assets:
-- `training/confusion_matrix.png`
-- `training/loss_accuracy_curve.png`
-
-### Full Kaggle GPU Training (Google Colab)
-For high-volume GPU training on 18,000+ Kaggle fruit images (*Fruits-360* + *Fresh and Rotten Fruits* dataset):
-
-1. Upload [`training/train.ipynb`](training/train.ipynb) to [Google Colab](https://colab.research.google.com/).
-2. Set runtime type to **T4 GPU**.
-3. Run all cells (`Ctrl + F9`) to download datasets, train the 2-stage transfer learning pipeline, and export `best.pt`.
-4. Copy the resulting `best.pt` into the `weights/` directory and click **`[RELOAD]`** in the UI header.
+### 3. Held-Out Test Evaluation & Benchmarking
+Evaluates exclusively on held-out test split (138 real images) and measures inference latency:
+```bash
+python -m training.evaluate --weights weights/best.pt --dataset dataset/processed --iterations 100
+```
+Generated reports:
+- `reports/classification_report.json`
+- `reports/benchmark_report.json`
+- `reports/confusion_matrix.png`
+- `reports/training_curves.png`
 
 ---
 
@@ -151,21 +117,20 @@ FruitVision/
 │   ├── utils/                  # HUD drawing helpers & file handlers
 │   ├── main.py                 # FastAPI application entry point
 │   └── requirements.txt        # Python backend dependencies
-├── frontend/
-│   ├── src/
-│   │   ├── components/         # Header, StatCards, HistoryTable
-│   │   ├── pages/              # Dashboard, InspectionHub, ConveyorSimulation, LiveMonitor, History, Analytics
-│   │   └── services/           # Axios API client
-│   ├── package.json            # Node dependencies
-│   └── vite.config.js          # Vite config & API reverse proxy (to :8001)
-├── sample_images/              # Presets (good apples, oranges, bananas, rotten, non-fruit)
+├── dataset/                    # Real fruit image dataset (6,654 images)
+│   └── processed/              # Group-stratified train/val/test splits
+├── docs/                       # Comprehensive guides (dataset, training, evaluation)
+├── frontend/                   # Vite React industrial UI
+├── reports/                    # Empirical audit, classification, benchmark reports & plots
+├── scripts/                    # Dataset audit and preparation automation
 ├── training/
-│   ├── train.ipynb             # Google Colab GPU training notebook
-│   ├── train_local.py          # Local PyTorch calibration script
-│   └── evaluate.py             # Evaluation & confusion matrix script
-├── weights/                    # Active model checkpoint (best.pt)
-├── start.bat                   # 1-click Windows runner
-└── README.md                   # Project documentation & run guide
+│   ├── config.py               # Central ML configuration
+│   ├── dataset.py              # PyTorch FruitDataset & DataLoaders
+│   ├── train_local.py          # 2-stage transfer learning pipeline
+│   ├── evaluate.py             # Empirical held-out test evaluation
+│   └── preprocessing.py        # ImageNet transforms & augmentations
+├── weights/                    # Active model checkpoint (best.pt) & backups
+└── start.bat                   # 1-click Windows runner
 ```
 
 ---

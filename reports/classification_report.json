@@ -1,0 +1,85 @@
+{
+  "evaluation_timestamp": "2026-11-04T15:24:07Z",
+  "weights_path": "weights/best.pt",
+  "model_architecture": "EfficientNetB0",
+  "model_version": "2.0.0-efficientnet-b0-4cls",
+  "total_test_samples": 138,
+  "classes": [
+    "Apple_Bad",
+    "Apple_Good",
+    "Banana_Bad",
+    "Banana_Good"
+  ],
+  "accuracy": 1.0,
+  "macro_metrics": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0
+  },
+  "weighted_metrics": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0
+  },
+  "defect_miss_rate_bad_fruit": 0.0,
+  "per_class_metrics": {
+    "Apple_Bad": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 43
+    },
+    "Apple_Good": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 32
+    },
+    "Banana_Bad": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 31
+    },
+    "Banana_Good": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "support": 32
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "Apple_Bad",
+      "Apple_Good",
+      "Banana_Bad",
+      "Banana_Good"
+    ],
+    "matrix": [
+      [
+        43,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        32,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        31,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        32
+      ]
+    ]
+  }
+}

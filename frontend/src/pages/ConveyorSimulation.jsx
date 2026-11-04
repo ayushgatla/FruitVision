@@ -5,6 +5,7 @@ export default function ConveyorSimulation({ onSimulationUpdate }) {
   const [isRunning, setIsRunning] = useState(false);
   const [speed, setSpeed] = useState(1); // 1x, 2x, 4x
   const [fruitFeed, setFruitFeed] = useState('random');
+  const [conveyorMode, setConveyorMode] = useState('all');
   const [currentFruit, setCurrentFruit] = useState(null);
   const [stats, setStats] = useState({
     total_sorted: 0,
@@ -50,7 +51,7 @@ export default function ConveyorSimulation({ onSimulationUpdate }) {
       setBeltPosition((prev) => (prev + 1) % 100);
 
       // 2. Fetch sample from backend (Runs CNN inference!)
-      const result = await getSimulationSample(fruitFeed);
+      const result = await getSimulationSample(fruitFeed, conveyorMode);
       setCurrentFruit(result);
 
       // 3. Trigger gate diversion based on model decision
@@ -155,6 +156,17 @@ export default function ConveyorSimulation({ onSimulationUpdate }) {
 
         {/* Control toolbar */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Line Mode Selector */}
+          <select 
+            value={conveyorMode}
+            onChange={(e) => setConveyorMode(e.target.value)}
+            className="px-2 py-1 bg-black border border-neutral-700 text-xs text-neutral-300 font-mono focus:outline-none focus:border-white cursor-pointer"
+          >
+            <option value="all">LINE: [ALL PRODUCE MIX]</option>
+            <option value="apple">LINE: [APPLE DEDICATED]</option>
+            <option value="banana">LINE: [BANANA DEDICATED]</option>
+          </select>
+
           {/* Feed Selector */}
           <select 
             value={fruitFeed}

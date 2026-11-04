@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from backend.database.database import init_db
 from backend.services.detector import get_detector
 from backend.utils.helpers import ensure_directories, STATIC_DIR
+from backend.models.schemas import HealthResponse
 from backend.utils.auth import verify_admin_key
 from backend.api import api_router
 
@@ -57,6 +58,15 @@ app.add_middleware(
     max_age=600,
 )
 
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(self), microphone=(), geolocation=()"
+    return response
+
 # Mount static files
 ensure_directories()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -73,7 +83,7 @@ def root():
         "status": "online"
     }
 
-@app.get("/api/health")
+@app.get("/api/health", response_model=HealthResponse)
 def health_check():
     detector = get_detector()
     return {

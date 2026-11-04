@@ -231,31 +231,52 @@ export default function Analytics({ analytics }) {
             Critical safety requirement: 0% false classification of rotten fruits as good to prevent food contamination.
           </p>
 
-          <div className="border border-neutral-800 p-4 bg-neutral-950">
-            <div className="grid grid-cols-4 gap-2 text-center text-xs">
-              <div className="p-2 text-neutral-500 text-[10px]">ACTUAL \ PRED</div>
-              <div className="p-2 border border-neutral-800 text-neutral-400 text-[10px]">PRED GOOD</div>
-              <div className="p-2 border border-neutral-800 text-neutral-400 text-[10px]">PRED DAMAGED</div>
-              <div className="p-2 border border-neutral-800 text-neutral-400 text-[10px]">PRED ROTTEN</div>
-
-              {/* Row 1: True Good */}
-              <div className="p-2 text-neutral-400 text-[10px] flex items-center justify-center">TRUE GOOD</div>
-              <div className="p-2 bg-white text-black font-bold">96</div>
-              <div className="p-2 bg-neutral-900 text-neutral-300">3</div>
-              <div className="p-2 bg-neutral-900 text-neutral-300">1</div>
-
-              {/* Row 2: True Damaged */}
-              <div className="p-2 text-neutral-400 text-[10px] flex items-center justify-center">TRUE DAMAGED</div>
-              <div className="p-2 bg-neutral-900 text-neutral-300">4</div>
-              <div className="p-2 bg-white text-black font-bold">92</div>
-              <div className="p-2 bg-neutral-900 text-neutral-300">4</div>
-
-              {/* Row 3: True Rotten */}
-              <div className="p-2 text-neutral-400 text-[10px] flex items-center justify-center">TRUE ROTTEN</div>
-              <div className="p-2 bg-neutral-950 text-neutral-600 font-bold border border-neutral-800">0</div>
-              <div className="p-2 bg-neutral-900 text-neutral-300">3</div>
-              <div className="p-2 bg-white text-black font-bold">97</div>
-            </div>
+          <div className="border border-neutral-800 p-4 bg-neutral-950 overflow-x-auto">
+            {modelMetrics?.confusion_matrix?.labels && modelMetrics?.confusion_matrix?.matrix ? (
+              <table className="w-full text-center text-xs border-collapse">
+                <thead>
+                  <tr>
+                    <th className="p-2 text-neutral-500 text-[10px] border border-neutral-800 bg-black">ACTUAL \ PRED</th>
+                    {modelMetrics.confusion_matrix.labels.map((lbl) => (
+                      <th key={lbl} className="p-2 border border-neutral-800 text-neutral-300 text-[10px] font-mono bg-black">
+                        {lbl.replace('_', ' ').toUpperCase()}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {modelMetrics.confusion_matrix.matrix.map((row, rIdx) => {
+                    const rowLabel = modelMetrics.confusion_matrix.labels[rIdx];
+                    return (
+                      <tr key={rowLabel}>
+                        <td className="p-2 border border-neutral-800 text-neutral-300 text-[10px] font-mono bg-black text-left">
+                          {rowLabel.replace('_', ' ').toUpperCase()}
+                        </td>
+                        {row.map((val, cIdx) => {
+                          const isDiagonal = rIdx === cIdx;
+                          return (
+                            <td
+                              key={cIdx}
+                              className={`p-2 border border-neutral-800 font-mono ${
+                                isDiagonal
+                                  ? 'bg-white text-black font-bold'
+                                  : val > 0
+                                  ? 'bg-neutral-900 text-neutral-300'
+                                  : 'bg-neutral-950 text-neutral-600'
+                              }`}
+                            >
+                              {val}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <div className="text-center text-xs text-neutral-500 py-4">Confusion matrix loading...</div>
+            )}
           </div>
 
           <div className="text-[10px] text-neutral-500 flex justify-between">

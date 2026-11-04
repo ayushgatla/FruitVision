@@ -83,10 +83,12 @@ export const inspectLiveFrame = async (frameBase64, sourceId = 'webcam') => {
   return res.data;
 };
 
-export const getSimulationSample = async (fruitChoice = 'random') => {
-  const res = await api.get('/simulation/sample', {
-    params: { fruit_choice: fruitChoice },
-  });
+export const getSimulationSample = async (fruitChoice = 'random', mode = 'all') => {
+  const params = { fruit_choice: fruitChoice };
+  if (mode && mode !== 'all') {
+    params.mode = mode;
+  }
+  const res = await api.get('/simulation/sample', { params });
   return res.data;
 };
 

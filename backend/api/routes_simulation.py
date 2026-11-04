@@ -5,12 +5,13 @@ import threading
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Literal
 
 from backend.database.database import get_db
 from backend.database.models import ConveyorEvent, FruitInspection
 from backend.services.detector import get_detector
 from backend.utils.helpers import SAMPLES_DIR
+from backend.models.schemas import ConveyorSimulationSampleResponse
 
 router = APIRouter()
 
@@ -31,33 +32,49 @@ SAMPLE_FILES = [
     ("sample_damaged_apple.jpg", "Apple"),
     ("sample_damaged_orange.jpg", "Orange"),
     ("sample_rotten_apple.jpg", "Apple"),
-    ("sample_rotten_banana.jpg", "Banana")
+    ("sample_rotten_banana.jpg", "Banana"),
+    ("sample_good_banana.jpg", "Banana")
 ]
 
-
-@router.get("/sample")
+@router.get("/sample", response_model=ConveyorSimulationSampleResponse)
 def get_simulation_fruit(
     fruit_choice: str = Query("random"),
+    mode: Literal["all", "apple", "banana"] = Query("all"),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
     Feeds the next fruit item on the conveyor belt,
+    supports dedicated Apple and Banana inspection line modes,
     runs actual EfficientNetB0 CNN inference,
     and returns sorting decision and gate routing.
     """
-    # Pick sample image
-    if fruit_choice != "random" and any(fruit_choice in f[0] for f in SAMPLE_FILES):
+    # Filter candidates by line mode (apple, banana, all)
+    line_mode = (mode or "all").lower()
+    if line_mode == "apple":
+        available_samples = [f for f in SAMPLE_FILES if f[1] == "Apple"]
+    elif line_mode == "banana":
+        available_samples = [f for f in SAMPLE_FILES if f[1] == "Banana"]
+    else:
+        available_samples = SAMPLE_FILES
+
+    if not available_samples:
+        available_samples = SAMPLE_FILES
+
+    # Filter by specific fruit choice if requested
+    if fruit_choice != "random" and any(fruit_choice in f[0] for f in available_samples):
+        sample_entry = next(f for f in available_samples if fruit_choice in f[0])
+    elif fruit_choice != "random" and any(fruit_choice in f[0] for f in SAMPLE_FILES):
         sample_entry = next(f for f in SAMPLE_FILES if fruit_choice in f[0])
     else:
-        # Realistic industrial distribution: 65% Good, 20% Damaged, 15% Rotten
+        # Industrial quality distribution: ~65% Good, ~20% Damaged, ~15% Rotten
         rand_roll = random.random()
         if rand_roll < 0.65:
-            candidates = [f for f in SAMPLE_FILES if "good" in f[0]]
+            candidates = [f for f in available_samples if "good" in f[0]]
         elif rand_roll < 0.85:
-            candidates = [f for f in SAMPLE_FILES if "damaged" in f[0]]
+            candidates = [f for f in available_samples if "damaged" in f[0]]
         else:
-            candidates = [f for f in SAMPLE_FILES if "rotten" in f[0]]
-        sample_entry = random.choice(candidates if candidates else SAMPLE_FILES)
+            candidates = [f for f in available_samples if "rotten" in f[0]]
+        sample_entry = random.choice(candidates if candidates else available_samples)
 
     filename, fruit_type = sample_entry
     sample_path = os.path.join(SAMPLES_DIR, filename)
@@ -74,6 +91,8 @@ def get_simulation_fruit(
         expected_label = "Rotten" if "rotten" in filename.lower() else ("Damaged" if "damaged" in filename.lower() else "Damaged")
         pred = {
             "label": expected_label,
+            "raw_class": f"{fruit_type}_{expected_label}",
+            "fruit_type": fruit_type,
             "confidence": 0.85,
             "probabilities": {
                 "Good": 0.05,
@@ -91,15 +110,15 @@ def get_simulation_fruit(
     with simulation_lock:
         if label == "Good":
             sorting_gate = "GATE_1_ACCEPTED"
-            action = "Accepted: Divert to Primary Retail Packaging Line"
+            action = f"Accepted: Divert to Primary Retail Packaging Line ({fruit_type} Grade A)"
             simulation_counters["good_count"] += 1
         elif label == "Damaged":
             sorting_gate = "GATE_2_SECONDARY"
-            action = "Secondary: Route to Manual Trimming & Puree Station"
+            action = f"Secondary: Route to Manual Trimming & Puree Station ({fruit_type})"
             simulation_counters["damaged_count"] += 1
         else: # Rotten
             sorting_gate = "GATE_3_REJECTED"
-            action = "Rejected: Pneumatic Ejection to Organic Bio-Waste Bin"
+            action = f"Rejected: Pneumatic Ejection to Organic Bio-Waste Bin ({fruit_type} Defect)"
             simulation_counters["rotten_count"] += 1
 
         simulation_counters["total_sorted"] += 1
@@ -130,7 +149,7 @@ def get_simulation_fruit(
         damaged_count=1 if label == "Damaged" else 0,
         rotten_count=1 if label == "Rotten" else 0,
         source_type="conveyor_simulation",
-        notes=f"Simulation item {item_id} ({fruit_type})"
+        notes=f"Simulation item {item_id} ({fruit_type} line: {line_mode})"
     )
     db.add(inspection)
     db.commit()
@@ -140,6 +159,8 @@ def get_simulation_fruit(
         "fruit_type": fruit_type,
         "sample_filename": filename,
         "predicted_class": label,
+        "raw_class": pred.get("raw_class", label),
+        "conveyor_mode": line_mode,
         "confidence": conf,
         "probabilities": pred["probabilities"],
         "sorting_gate": sorting_gate,
@@ -148,7 +169,6 @@ def get_simulation_fruit(
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "live_counters": current_counters
     }
-
 
 @router.get("/stats")
 def get_simulation_stats() -> Dict[str, Any]:
@@ -170,7 +190,6 @@ def get_simulation_stats() -> Dict[str, Any]:
         "acceptance_rate": acceptance,
         "speed": speed
     }
-
 
 @router.post("/reset")
 def reset_simulation_stats() -> Dict[str, Any]:

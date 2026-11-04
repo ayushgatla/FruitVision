@@ -1,0 +1,18 @@
+{
+  "benchmark_timestamp": "2026-11-04T15:24:07Z",
+  "device": "cpu",
+  "iterations": 100,
+  "batch_size": 1,
+  "input_resolution": [
+    224,
+    224,
+    3
+  ],
+  "latency_ms": {
+    "mean": 30.18,
+    "median_p50": 28.32,
+    "p95": 39.22,
+    "p99": 58.04
+  },
+  "throughput_fps": 33.1
+}

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Dict, Any, List
@@ -7,11 +7,9 @@ from backend.database.models import FruitInspection
 
 def get_analytics_metrics(db: Session) -> Dict[str, Any]:
     """Calculate summary and trend metrics for the FruitVision dashboard."""
-    # Total inspections
     total_inspected = db.query(FruitInspection).count()
 
     if total_inspected == 0:
-        # Default empty/benchmark state
         return {
             "total_inspected": 0,
             "good_fruits": 0,
@@ -30,25 +28,34 @@ def get_analytics_metrics(db: Session) -> Dict[str, Any]:
             ]
         }
 
-    good_count = db.query(FruitInspection).filter(FruitInspection.predicted_class == "Good").count()
-    damaged_count = db.query(FruitInspection).filter(FruitInspection.predicted_class == "Damaged").count()
-    rotten_count = db.query(FruitInspection).filter(FruitInspection.predicted_class == "Rotten").count()
-    not_fruit_count = db.query(FruitInspection).filter(FruitInspection.predicted_class.in_(["Not Fruits", "Not Fruit"])).count()
+    good_count = db.query(FruitInspection).filter(
+        FruitInspection.predicted_class.in_(["Good", "Apple_Good", "Banana_Good"])
+    ).count()
+    damaged_count = db.query(FruitInspection).filter(
+        FruitInspection.predicted_class == "Damaged"
+    ).count()
+    rotten_count = db.query(FruitInspection).filter(
+        FruitInspection.predicted_class.in_(["Rotten", "Apple_Bad", "Banana_Bad"])
+    ).count()
+    not_fruit_count = db.query(FruitInspection).filter(
+        FruitInspection.predicted_class.in_(["Not Fruits", "Not Fruit"])
+    ).count()
 
     total_valid_produce = max(1, good_count + damaged_count + rotten_count)
     acceptance_rate = round((good_count / total_valid_produce) * 100, 1)
     secondary_rate = round((damaged_count / total_valid_produce) * 100, 1)
     rejection_rate = round((rotten_count / total_valid_produce) * 100, 1)
 
-    # Active alerts in last 60 minutes (damaged, rotten, or invalid objects detected)
-    one_hour_ago = datetime.utcnow() - timedelta(minutes=60)
+    # Active alerts in last 60 minutes
+    now_utc = datetime.now(timezone.utc)
+    one_hour_ago = now_utc - timedelta(minutes=60)
     active_alerts = db.query(FruitInspection).filter(
         FruitInspection.inspection_timestamp >= one_hour_ago,
-        FruitInspection.predicted_class.in_(["Damaged", "Rotten", "Not Fruits", "Not Fruit"])
+        FruitInspection.predicted_class.in_(["Damaged", "Rotten", "Not Fruits", "Not Fruit", "Apple_Bad", "Banana_Bad"])
     ).count()
 
     # Today's inspection count
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
     today_inspected = db.query(FruitInspection).filter(
         FruitInspection.inspection_timestamp >= today_start
     ).count()
@@ -56,7 +63,7 @@ def get_analytics_metrics(db: Session) -> Dict[str, Any]:
     # 7-day trend analysis
     trends = []
     for i in range(6, -1, -1):
-        day_date = (datetime.utcnow() - timedelta(days=i)).date()
+        day_date = (now_utc - timedelta(days=i)).date()
         start = datetime.combine(day_date, datetime.min.time())
         end = datetime.combine(day_date, datetime.max.time())
 
@@ -68,7 +75,7 @@ def get_analytics_metrics(db: Session) -> Dict[str, Any]:
         day_good = db.query(FruitInspection).filter(
             FruitInspection.inspection_timestamp >= start,
             FruitInspection.inspection_timestamp <= end,
-            FruitInspection.predicted_class == "Good"
+            FruitInspection.predicted_class.in_(["Good", "Apple_Good", "Banana_Good"])
         ).count()
 
         day_rate = round((day_good / day_total * 100), 1) if day_total > 0 else 92.5
@@ -102,7 +109,8 @@ def get_analytics_metrics(db: Session) -> Dict[str, Any]:
 
 def generate_placeholder_trends():
     trends = []
-    base_dates = [datetime.utcnow() - timedelta(days=i) for i in range(6, -1, -1)]
+    now_utc = datetime.now(timezone.utc)
+    base_dates = [now_utc - timedelta(days=i) for i in range(6, -1, -1)]
     defaults = [
         (91.2, 45, 4),
         (93.5, 62, 4),
@@ -121,4 +129,3 @@ def generate_placeholder_trends():
             "defects": defs
         })
     return trends
-

@@ -17,13 +17,15 @@ from backend.utils.helpers import (
 )
 from backend.models.schemas import SingleInspectionResponse, MultiFruitInspectionResponse
 
+from pydantic import BaseModel, Field
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
 class FramePayload(BaseModel):
-    frame_data: str
+    frame_data: str = Field(..., max_length=15_000_000)
     source_id: Optional[str] = "webcam"
 
 
@@ -45,7 +47,7 @@ def inspect_single_image(
     upload_path, upload_url, img_bgr = process_and_save_upload(file, prefix="upload")
 
     # Perform detection and classification
-    safe_source_name = os.path.basename(file.filename or "upload.jpg")
+    safe_source_name = os.path.basename(file.filename or "upload.jpg")[:100]
     result = detector.detect_and_classify_image(img_bgr, source_id=safe_source_name)
 
     # Save record to SQLite database
@@ -69,6 +71,8 @@ def inspect_single_image(
     return {
         "id": inspection.id,
         "predicted_class": result["predicted_class"],
+        "raw_class": result.get("raw_class"),
+        "fruit_type": result.get("fruit_type", "Produce"),
         "confidence": result["confidence"],
         "status": result["status"],
         "suggested_action": result["suggested_action"],

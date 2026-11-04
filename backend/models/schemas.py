@@ -4,6 +4,8 @@ from datetime import datetime
 
 class QualityPrediction(BaseModel):
     label: str # "Good", "Damaged", "Rotten"
+    raw_class: Optional[str] = None # e.g. "Apple_Good"
+    fruit_type: Optional[str] = None # "Apple", "Banana", "Produce"
     confidence: float # 0.0 - 1.0
     probabilities: Dict[str, float]
     suggested_action: str
@@ -15,12 +17,15 @@ class BoundingBox(BaseModel):
     x2: int
     y2: int
     label: str
+    raw_class: Optional[str] = None
     confidence: float
     status: str
 
 class SingleInspectionResponse(BaseModel):
     id: Optional[int] = None
     predicted_class: str
+    raw_class: Optional[str] = None
+    fruit_type: Optional[str] = None
     confidence: float
     status: str
     suggested_action: str
@@ -47,13 +52,17 @@ class MultiFruitInspectionResponse(BaseModel):
 class ConveyorSimulationSampleResponse(BaseModel):
     item_id: str
     fruit_type: str
+    sample_filename: Optional[str] = None
+    conveyor_mode: Optional[str] = None
     predicted_class: str
+    raw_class: Optional[str] = None
     confidence: float
     probabilities: Dict[str, float]
     sorting_gate: str # "GATE_1_ACCEPTED", "GATE_2_SECONDARY", "GATE_3_REJECTED"
     action: str
     image_url: str
     timestamp: str
+    live_counters: Optional[Dict[str, Any]] = None
 
 class AnalyticsSummaryResponse(BaseModel):
     total_inspected: int
@@ -77,4 +86,3 @@ class HealthResponse(BaseModel):
     classes: List[str]
     db_status: str
     version: str
-
