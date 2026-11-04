@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-11-04T07:02:26.178332",
+  "images_tested": 6,
+  "total_fruits_inspected": 9,
+  "good_count": 4,
+  "damaged_count": 2,
+  "rotten_count": 3,
+  "acceptance_rate": 44.4,
+  "avg_latency_ms": 45.4,
+  "db_records": 27,
+  "results": [
+    {
+      "index": 1,
+      "file": "sample_damaged_apple.jpg",
+      "latency_ms": 72.1,
+      "classification": "Damaged",
+      "confidence_or_rate": 99.6,
+      "status": "SECONDARY_INSPECTION"
+    },
+    {
+      "index": 2,
+      "file": "sample_good_apple.jpg",
+      "latency_ms": 34.8,
+      "classification": "Good",
+      "confidence_or_rate": 100.0,
+      "status": "ACCEPTED"
+    },
+    {
+      "index": 3,
+      "file": "sample_good_orange.jpg",
+      "latency_ms": 30.2,
+      "classification": "Good",
+      "confidence_or_rate": 99.9,
+      "status": "ACCEPTED"
+    },
+    {
+      "index": 4,
+      "file": "sample_multi_fruits.jpg",
+      "latency_ms": 79.3,
+      "classification": "Batch (4 fruits)",
+      "confidence_or_rate": 50.0,
+      "status": "CRITICAL_DEFECTS_DETECTED"
+    },
+    {
+      "index": 5,
+      "file": "sample_rotten_apple.jpg",
+      "latency_ms": 29.8,
+      "classification": "Rotten",
+      "confidence_or_rate": 99.5,
+      "status": "REJECTED"
+    },
+    {
+      "index": 6,
+      "file": "sample_rotten_banana.jpg",
+      "latency_ms": 26.2,
+      "classification": "Rotten",
+      "confidence_or_rate": 99.5,
+      "status": "REJECTED"
+    }
+  ]
+}

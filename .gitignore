@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Database
+*.db
+*.sqlite3
+
+# Static generated files
+backend/static/evidence/*
+!backend/static/evidence/.gitkeep
+backend/static/uploads/*
+!backend/static/uploads/.gitkeep
+backend/static/processed/*
+!backend/static/processed/.gitkeep
+
+# Node
+node_modules/
+dist/
+.DS_Store
+

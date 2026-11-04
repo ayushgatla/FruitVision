@@ -1,0 +1,381 @@
+# Project: AI-Based Fruit Quality Inspection and Automated Sorting System
+
+Act as a senior AI/ML engineer, computer vision specialist, and full-stack developer. Build a complete Industry 4.0 project named **FruitVision AI — Intelligent Fruit Quality Inspection and Sorting System**.
+
+The system should use Convolutional Neural Networks (CNN) and transfer learning to automatically classify fruits based on their quality and detect damaged or rotten fruits.
+
+The project must be suitable for a B.Tech CSE group project and should prioritize model accuracy, fast training, practical demonstration, and a professional user interface.
+
+## 1. Project Objective
+
+Develop an AI-powered fruit inspection system that automatically examines fruit images and classifies them into:
+
+- Good: Fresh and acceptable fruits.
+- Damaged: Fruits with visible physical damage, bruises, cuts, or defects.
+- Rotten: Fruits showing signs of decay, mold, or spoilage.
+
+The system should simulate an automated fruit quality inspection unit used in food processing and manufacturing industries.
+
+## 2. Machine Learning Requirements
+
+**CNN Architecture:** EfficientNetB0.
+
+**Framework:** TensorFlow / Keras.
+
+**Training platform:** Google Colab with GPU acceleration.
+
+**Training limit:** Maximum 60 minutes.
+
+**Preferred training time:** 15–40 minutes.
+
+Use transfer learning with pretrained ImageNet weights. Do not train the CNN from scratch.
+
+### Dataset Requirements
+
+Use publicly available datasets:
+
+1. Fruits-360 Dataset:
+   https://www.kaggle.com/datasets/moltean/fruits
+
+2. Fruit quality and defect image datasets:
+   Search for publicly available datasets containing fresh, damaged, bruised, and rotten fruit images.
+
+Use Fruits-360 for fruit recognition and suitable quality/defect datasets for quality classification.
+
+Important:
+- Do not assume Fruits-360 alone provides good, damaged, and rotten labels.
+- Verify the dataset labels before training.
+- Create a unified dataset with three classes: Good, Damaged, Rotten.
+- Use only images that genuinely represent the corresponding quality category.
+- Remove duplicates and corrupted images.
+- Split data into training, validation, and testing sets.
+- Avoid data leakage between splits.
+- Use stratified splitting where appropriate.
+
+If sufficient defect images are unavailable, clearly document the limitation rather than generating fake samples or misleading labels.
+
+## 3. Model Training Pipeline
+
+Implement the following pipeline:
+
+1. Dataset downloading and extraction.
+2. Image preprocessing.
+3. Dataset visualization.
+4. Class distribution analysis.
+5. Train/validation/test splitting.
+6. Image resizing to 224 × 224.
+7. Data augmentation.
+8. EfficientNetB0 pretrained model loading.
+9. Transfer learning.
+10. Fine-tuning selected layers.
+11. Model evaluation.
+12. Saving the best model.
+
+### Initial training configuration
+
+- Architecture: EfficientNetB0.
+- Pretrained weights: ImageNet.
+- Input size: 224 × 224 × 3.
+- Batch size: 32, adjusted to available GPU memory.
+- Optimizer: Adam.
+- Initial learning rate: 0.001 for the classification head.
+- Fine-tuning learning rate: 0.0001.
+- Epochs: 10–20 maximum.
+- Early stopping: Patience of 3.
+- Loss: Categorical Crossentropy.
+- GPU acceleration enabled.
+
+Freeze the pretrained backbone initially and train the classification head. Then optionally unfreeze the final layers for fine-tuning.
+
+Use EarlyStopping and ModelCheckpoint to save the best-performing model.
+
+## 4. Evaluation Requirements
+
+Target a test accuracy of 90% or higher where the dataset supports it.
+
+Evaluate the model using:
+
+- Accuracy.
+- Precision.
+- Recall.
+- F1-score.
+- Confusion matrix.
+- Per-class classification report.
+- Training and validation accuracy graphs.
+- Training and validation loss graphs.
+
+Evaluate on a separate held-out test set.
+
+Test the model on previously unseen fruit images.
+
+Display the predicted class and confidence score.
+
+Do not hardcode accuracy values or fabricate evaluation results.
+
+Pay special attention to class imbalance and false classification of rotten fruits as good.
+
+## 5. Fruit Inspection Features
+
+The application must support:
+
+### Image Upload
+- Upload JPG, JPEG, and PNG images.
+- Predict fruit quality.
+- Display the predicted class.
+- Show prediction confidence.
+- Display the original image.
+- Display classification results.
+- Provide recommendations based on the predicted quality.
+
+### Multiple Fruit Detection
+Allow users to upload an image containing multiple fruits.
+
+Where feasible, implement fruit detection or individual fruit cropping before classification.
+
+Classify each fruit separately and display:
+- Total fruit count.
+- Good fruit count.
+- Damaged fruit count.
+- Rotten fruit count.
+- Overall quality percentage.
+
+Do not assume that a single-fruit classifier automatically supports multiple fruits in one image.
+
+## 6. Automated Sorting Simulation
+
+Create an interactive conveyor belt simulation representing an industrial fruit sorting system.
+
+The simulation should:
+
+1. Display fruits moving along a conveyor belt.
+2. Process each fruit using the trained CNN model.
+3. Classify each fruit into Good, Damaged, or Rotten.
+4. Route good fruits into the accepted-products section.
+5. Route damaged fruits into the secondary inspection section.
+6. Route rotten fruits into the rejected-products section.
+
+Use animated sorting gates or simulated robotic arms.
+
+Allow users to start, pause, and reset the simulation.
+
+Display real-time counters for each category.
+
+The simulation must use actual model predictions for uploaded test images or a defined set of test samples, not random classifications.
+
+## 7. Frontend Requirements
+
+**Technology:**
+- React.js
+- Vite
+- Tailwind CSS
+- Framer Motion
+- Recharts
+
+Create a professional industrial dashboard.
+
+### Main Dashboard
+
+Display:
+- Total fruits inspected.
+- Good fruits.
+- Damaged fruits.
+- Rotten fruits.
+- Quality acceptance rate.
+- Recent inspection records.
+- Daily inspection statistics.
+
+### Inspection Page
+
+Include:
+- Image upload.
+- Image preview.
+- Predict button.
+- Prediction result.
+- Confidence percentage.
+- Quality category.
+- Suggested action.
+
+### Conveyor Simulation Page
+
+Include:
+- Animated conveyor belt.
+- Fruit movement.
+- Sorting gates.
+- Good, damaged, and rejected output sections.
+- Live classification counters.
+- Start, pause, and reset controls.
+
+### Analytics Page
+
+Display:
+- Fruit quality distribution.
+- Daily inspection trends.
+- Class-wise accuracy.
+- Rejection percentage.
+- Quality acceptance trends.
+
+Use Recharts for visualization.
+
+### History Page
+
+Store:
+- Inspection ID.
+- Timestamp.
+- Fruit image path.
+- Predicted class.
+- Confidence score.
+- Inspection status.
+
+Allow filtering by category and date.
+
+## 8. Backend Requirements
+
+**Technology:** Python + FastAPI.
+
+Implement APIs for:
+
+- Single image classification.
+- Multiple image classification.
+- Fruit inspection statistics.
+- Inspection history.
+- Model information.
+- Health check.
+
+Load the trained EfficientNetB0 model once when the backend starts.
+
+Implement image preprocessing consistently with the training pipeline.
+
+Use appropriate error handling and input validation.
+
+## 9. Database Requirements
+
+Use SQLite with SQLAlchemy.
+
+Create an inspection table containing:
+
+- id
+- image_path
+- predicted_class
+- confidence
+- inspection_timestamp
+- inspection_status
+
+Store inspection records automatically after successful predictions.
+
+## 10. Project Architecture
+
+Implement this workflow:
+
+Fruit Image / Uploaded Image
+→ FastAPI Backend
+→ Image Preprocessing
+→ EfficientNetB0 CNN
+→ Fruit Quality Classification
+→ Good / Damaged / Rotten
+→ Prediction Results
+→ SQLite Database
+→ React Dashboard
+→ Analytics and Sorting Simulation
+
+Maintain separate modules for model inference, preprocessing, API routes, database operations, and frontend components.
+
+## 11. Project Directory Structure
+
+Create the following structure:
+
+FruitVision-AI/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   └── App.jsx
+│   ├── package.json
+│   └── vite.config.js
+│
+├── backend/
+│   ├── main.py
+│   ├── api/
+│   ├── models/
+│   ├── services/
+│   ├── database/
+│   ├── utils/
+│   └── requirements.txt
+│
+├── training/
+│   ├── train.ipynb
+│   ├── evaluate.py
+│   └── preprocessing.py
+│
+├── weights/
+│   └── README.md
+│
+├── sample_images/
+├── README.md
+└── .gitignore
+
+## 12. Google Colab Training Notebook
+
+Create a complete notebook that:
+
+1. Installs required libraries.
+2. Downloads the datasets.
+3. Extracts and validates images.
+4. Displays sample images and class distributions.
+5. Preprocesses the dataset.
+6. Trains EfficientNetB0 using transfer learning.
+7. Performs optional fine-tuning.
+8. Evaluates the model.
+9. Generates evaluation graphs.
+10. Saves the best model.
+11. Provides instructions to download the trained model.
+
+The notebook must be executable from beginning to end without manually editing multiple code cells.
+
+Keep total training time within 60 minutes using a Colab GPU, subject to dataset size and availability.
+
+## 13. Final Deliverables
+
+Generate:
+
+1. Complete Google Colab training notebook.
+2. Dataset preparation and preprocessing scripts.
+3. Trained EfficientNetB0 model.
+4. Model evaluation scripts.
+5. Complete FastAPI backend.
+6. Complete React frontend.
+7. SQLite database integration.
+8. Working fruit classification.
+9. Multiple-fruit inspection where supported.
+10. Animated conveyor sorting simulation.
+11. Analytics dashboard.
+12. Inspection history.
+13. Architecture diagram using Mermaid.
+14. Detailed README with installation and execution instructions.
+
+## 14. Development Instructions
+
+Develop the project in the following phases:
+
+Phase 1: Dataset collection and preparation.
+
+Phase 2: EfficientNetB0 training and evaluation.
+
+Phase 3: Backend development and model integration.
+
+Phase 4: Frontend dashboard development.
+
+Phase 5: Conveyor belt sorting simulation.
+
+Phase 6: Testing and documentation.
+
+Generate actual working source code, not pseudocode.
+
+Do not use hardcoded predictions, fake accuracy scores, or random model outputs.
+
+The final application must work locally on Windows and Linux after training.
+
+Prioritize correct fruit quality classification, reproducible results, fast model training, and a polished industrial demonstration.
+
+The project should be suitable for a 4–5-member B.Tech CSE group presentation.
