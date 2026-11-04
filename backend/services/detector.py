@@ -240,8 +240,9 @@ class FruitVisionDetector:
                 img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
                 pil_im = Image.fromarray(img_rgb)
                 t = inference_transform(pil_im).unsqueeze(0).to(self.device)
-                with torch.no_grad():
-                    out = torch.softmax(self.imagenet_model(t), dim=1)[0]
+                with self.model_lock:
+                    with torch.no_grad():
+                        out = torch.softmax(self.imagenet_model(t), dim=1)[0]
                 top_prob, top_idx = torch.max(out, dim=0)
                 top_cat = self.imagenet_cats[top_idx.item()].lower()
 
@@ -446,6 +447,7 @@ class FruitVisionDetector:
         good_count = sum(1 for d in detections if d["label"] == "Good")
         damaged_count = sum(1 for d in detections if d["label"] == "Damaged")
         rotten_count = sum(1 for d in detections if d["label"] == "Rotten")
+        non_fruit_count = sum(1 for d in detections if d.get("label") == "Not Fruits")
         total_fruits = len(detections)
         acceptance_rate = round((good_count / total_fruits) * 100, 1) if total_fruits > 0 else 0.0
 
@@ -453,6 +455,8 @@ class FruitVisionDetector:
             overall_status = "CRITICAL_DEFECTS_DETECTED"
         elif damaged_count > 0:
             overall_status = "SECONDARY_GRADING_REQUIRED"
+        elif non_fruit_count > 0 and good_count == 0:
+            overall_status = "INSPECTION_FAILED"
         else:
             overall_status = "BATCH_ACCEPTED"
 

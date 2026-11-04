@@ -37,3 +37,9 @@ dataset/
 dataset/processed/
 weights/backups/
 *.pth
+
+# Environment & Secrets
+.env
+.env.*
+*.pem
+

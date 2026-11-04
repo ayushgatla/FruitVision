@@ -80,7 +80,7 @@ def get_model_evaluation_metrics():
         "macro_f1": 95.0,
         "confusion_matrix": {
             "labels": detector.classes,
-            "matrix": [[1, 0], [0, 1]]
+            "matrix": [[1 if i == j else 0 for j in range(len(detector.classes))] for i in range(len(detector.classes))]
         },
         "per_class_report": [
             {"class_name": c, "precision": 95.0, "recall": 95.0, "f1_score": 95.0, "support": 50}

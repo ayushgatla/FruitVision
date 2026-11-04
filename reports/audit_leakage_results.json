@@ -1,0 +1,314 @@
+{
+  "total_samples": {
+    "train": 592,
+    "val": 146,
+    "test": 138
+  },
+  "class_balance": {
+    "train": {
+      "Apple_Bad": 141,
+      "Apple_Good": 141,
+      "Banana_Bad": 167,
+      "Banana_Good": 143
+    },
+    "val": {
+      "Apple_Bad": 37,
+      "Apple_Good": 47,
+      "Banana_Bad": 32,
+      "Banana_Good": 30
+    },
+    "test": {
+      "Apple_Bad": 43,
+      "Apple_Good": 32,
+      "Banana_Bad": 31,
+      "Banana_Good": 32
+    }
+  },
+  "exact_sha256_duplicates": {
+    "train_val": 0,
+    "train_test": 0,
+    "val_test": 0
+  },
+  "burst_leakage_cases_within_120s": [
+    {
+      "delta_seconds": 5.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161155.jpg",
+      "test_file": "20190809_161200.jpg"
+    },
+    {
+      "delta_seconds": 9.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161151.jpg",
+      "test_file": "20190809_161200.jpg"
+    },
+    {
+      "delta_seconds": 18.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161142.jpg",
+      "test_file": "20190809_161200.jpg"
+    },
+    {
+      "delta_seconds": 25.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161155.jpg",
+      "test_file": "20190809_161220.jpg"
+    },
+    {
+      "delta_seconds": 28.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161132.jpg",
+      "test_file": "20190809_161200.jpg"
+    },
+    {
+      "delta_seconds": 29.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161151.jpg",
+      "test_file": "20190809_161220.jpg"
+    },
+    {
+      "delta_seconds": 31.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161129.jpg",
+      "test_file": "20190809_161200.jpg"
+    },
+    {
+      "delta_seconds": 35.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161155.jpg",
+      "test_file": "20190809_161230.jpg"
+    },
+    {
+      "delta_seconds": 38.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161122.jpg",
+      "test_file": "20190809_161200.jpg"
+    },
+    {
+      "delta_seconds": 38.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161142.jpg",
+      "test_file": "20190809_161220.jpg"
+    },
+    {
+      "delta_seconds": 39.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161151.jpg",
+      "test_file": "20190809_161230.jpg"
+    },
+    {
+      "delta_seconds": 42.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161118.jpg",
+      "test_file": "20190809_161200.jpg"
+    },
+    {
+      "delta_seconds": 44.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161155.jpg",
+      "test_file": "20190809_161239.jpg"
+    },
+    {
+      "delta_seconds": 47.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161113.jpg",
+      "test_file": "20190809_161200.jpg"
+    },
+    {
+      "delta_seconds": 48.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161132.jpg",
+      "test_file": "20190809_161220.jpg"
+    },
+    {
+      "delta_seconds": 48.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161142.jpg",
+      "test_file": "20190809_161230.jpg"
+    },
+    {
+      "delta_seconds": 48.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161151.jpg",
+      "test_file": "20190809_161239.jpg"
+    },
+    {
+      "delta_seconds": 51.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161109.jpg",
+      "test_file": "20190809_161200.jpg"
+    },
+    {
+      "delta_seconds": 51.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161129.jpg",
+      "test_file": "20190809_161220.jpg"
+    },
+    {
+      "delta_seconds": 51.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161155.jpg",
+      "test_file": "20190809_161246.jpg"
+    },
+    {
+      "delta_seconds": 54.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161106.jpg",
+      "test_file": "20190809_161200.jpg"
+    },
+    {
+      "delta_seconds": 55.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161151.jpg",
+      "test_file": "20190809_161246.jpg"
+    },
+    {
+      "delta_seconds": 57.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161142.jpg",
+      "test_file": "20190809_161239.jpg"
+    },
+    {
+      "delta_seconds": 58.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161122.jpg",
+      "test_file": "20190809_161220.jpg"
+    },
+    {
+      "delta_seconds": 58.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161132.jpg",
+      "test_file": "20190809_161230.jpg"
+    },
+    {
+      "delta_seconds": 61.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161129.jpg",
+      "test_file": "20190809_161230.jpg"
+    },
+    {
+      "delta_seconds": 62.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161118.jpg",
+      "test_file": "20190809_161220.jpg"
+    },
+    {
+      "delta_seconds": 64.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161142.jpg",
+      "test_file": "20190809_161246.jpg"
+    },
+    {
+      "delta_seconds": 67.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161113.jpg",
+      "test_file": "20190809_161220.jpg"
+    },
+    {
+      "delta_seconds": 67.0,
+      "class": "Apple_Good",
+      "train_file": "20190809_161132.jpg",
+      "test_file": "20190809_161239.jpg"
+    }
+  ],
+  "total_pairs_within_120s": 50,
+  "perceptual_near_pairs_dhash_le_4": [
+    {
+      "hamming_distance": 4,
+      "test_class": "Banana_Bad",
+      "train_class": "Banana_Bad",
+      "test_file": "IMG_8039.JPG",
+      "train_file": "IMG_8040.JPG",
+      "same_class": true
+    },
+    {
+      "hamming_distance": 2,
+      "test_class": "Banana_Good",
+      "train_class": "Banana_Good",
+      "test_file": "IMG_8741.JPG",
+      "train_file": "IMG_8744.JPG",
+      "same_class": true
+    },
+    {
+      "hamming_distance": 2,
+      "test_class": "Banana_Good",
+      "train_class": "Banana_Good",
+      "test_file": "IMG_8741.JPG",
+      "train_file": "IMG_8745.JPG",
+      "same_class": true
+    },
+    {
+      "hamming_distance": 2,
+      "test_class": "Banana_Good",
+      "train_class": "Banana_Good",
+      "test_file": "IMG_8742.JPG",
+      "train_file": "IMG_8744.JPG",
+      "same_class": true
+    },
+    {
+      "hamming_distance": 2,
+      "test_class": "Banana_Good",
+      "train_class": "Banana_Good",
+      "test_file": "IMG_8742.JPG",
+      "train_file": "IMG_8745.JPG",
+      "same_class": true
+    },
+    {
+      "hamming_distance": 4,
+      "test_class": "Banana_Good",
+      "train_class": "Banana_Good",
+      "test_file": "IMG_9230.JPG",
+      "train_file": "IMG_9236.JPG",
+      "same_class": true
+    },
+    {
+      "hamming_distance": 4,
+      "test_class": "Banana_Good",
+      "train_class": "Banana_Good",
+      "test_file": "IMG_9230.JPG",
+      "train_file": "IMG_9237.JPG",
+      "same_class": true
+    },
+    {
+      "hamming_distance": 4,
+      "test_class": "Banana_Good",
+      "train_class": "Banana_Good",
+      "test_file": "IMG_9230.JPG",
+      "train_file": "IMG_9238.JPG",
+      "same_class": true
+    },
+    {
+      "hamming_distance": 4,
+      "test_class": "Banana_Good",
+      "train_class": "Banana_Good",
+      "test_file": "IMG_9231.JPG",
+      "train_file": "IMG_9236.JPG",
+      "same_class": true
+    },
+    {
+      "hamming_distance": 4,
+      "test_class": "Banana_Good",
+      "train_class": "Banana_Good",
+      "test_file": "IMG_9231.JPG",
+      "train_file": "IMG_9237.JPG",
+      "same_class": true
+    },
+    {
+      "hamming_distance": 4,
+      "test_class": "Banana_Good",
+      "train_class": "Banana_Good",
+      "test_file": "IMG_9231.JPG",
+      "train_file": "IMG_9238.JPG",
+      "same_class": true
+    }
+  ],
+  "total_perceptual_near_le_4": 11,
+  "min_distance_distribution": {
+    "mean": 14.804347826086957,
+    "median": 16.0,
+    "min": 2,
+    "max": 22,
+    "fraction_with_dist_le_2": 0.014492753623188406,
+    "fraction_with_dist_le_4": 0.036231884057971016
+  }
+}
