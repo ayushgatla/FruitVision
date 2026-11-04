@@ -3,11 +3,11 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 class QualityPrediction(BaseModel):
-    label: str # "Good", "Damaged", "Rotten"
+    label: str # "Good", "Damaged", "Rotten", "Not Fruits"
     confidence: float # 0.0 - 1.0
     probabilities: Dict[str, float]
     suggested_action: str
-    status: str # "ACCEPTED", "SECONDARY_INSPECTION", "REJECTED"
+    status: str # "ACCEPTED", "SECONDARY_INSPECTION", "REJECTED", "NON_PRODUCE"
 
 class BoundingBox(BaseModel):
     x1: int
@@ -30,6 +30,13 @@ class SingleInspectionResponse(BaseModel):
     timestamp: str
     device: str
     model_version: str
+    is_multi: Optional[bool] = False
+    fruit_count: Optional[int] = 1
+    good_count: Optional[int] = 0
+    damaged_count: Optional[int] = 0
+    rotten_count: Optional[int] = 0
+    acceptance_rate: Optional[float] = 100.0
+    detections: Optional[List[BoundingBox]] = []
 
 class MultiFruitInspectionResponse(BaseModel):
     id: Optional[int] = None
@@ -43,6 +50,23 @@ class MultiFruitInspectionResponse(BaseModel):
     image_url: str
     annotated_image_url: Optional[str] = None
     timestamp: str
+    predicted_class: Optional[str] = "Good"
+    confidence: Optional[float] = 0.95
+    probabilities: Optional[Dict[str, float]] = None
+
+class LiveFrameResponse(BaseModel):
+    predicted_class: str
+    confidence: float
+    status: str
+    suggested_action: str
+    probabilities: Dict[str, float]
+    alert: bool
+    total_fruits: int = 1
+    good_count: int = 0
+    damaged_count: int = 0
+    rotten_count: int = 0
+    acceptance_rate: float = 100.0
+    detections: List[BoundingBox] = []
 
 class ConveyorSimulationSampleResponse(BaseModel):
     item_id: str
@@ -77,4 +101,3 @@ class HealthResponse(BaseModel):
     classes: List[str]
     db_status: str
     version: str
-
