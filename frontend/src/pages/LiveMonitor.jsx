@@ -340,9 +340,14 @@ export default function LiveMonitor({ onAlertLogged }) {
 
             {/* Overlaid Status HUD Badge */}
             {isActive && currentPrediction && (
-              <div className="absolute top-3 left-3 bg-black/85 border border-neutral-700 p-2 text-xs space-y-1 z-10">
-                <div className="text-[10px] text-neutral-400 uppercase">CLASSIFICATION HUD</div>
-                <div className="text-white font-bold flex items-center space-x-2">
+              <div className={`absolute top-3 left-3 bg-black/90 p-2 text-xs space-y-1 z-10 border ${
+                currentPrediction.predicted_class === 'Good' ? 'border-green-500 text-green-400' :
+                currentPrediction.predicted_class === 'Damaged' ? 'border-amber-500 text-amber-400' :
+                currentPrediction.predicted_class === 'Rotten' ? 'border-red-500 text-red-400' :
+                'border-neutral-700 text-neutral-300'
+              }`}>
+                <div className="text-[10px] text-neutral-400 uppercase tracking-wider">CLASSIFICATION HUD</div>
+                <div className="font-bold flex items-center space-x-2">
                   <span>[{currentPrediction.predicted_class.toUpperCase()}] ({Math.round(currentPrediction.confidence * 100)}%)</span>
                   {currentPrediction.total_fruits > 1 && (
                     <span className="text-[10px] bg-neutral-800 text-yellow-400 px-1 border border-neutral-600">
@@ -353,6 +358,18 @@ export default function LiveMonitor({ onAlertLogged }) {
                 <div className="text-[10px] text-neutral-400">
                   STATUS: {currentPrediction.status}
                 </div>
+              </div>
+            )}
+
+            {/* Real-time Sensor Guidance Banner */}
+            {isActive && currentPrediction && (
+              <div className="absolute bottom-2 inset-x-2 flex justify-between items-center px-2.5 py-1 bg-black/85 border border-neutral-800 text-[10px] text-neutral-400 z-10">
+                <span className={currentPrediction.total_fruits > 0 ? 'text-white' : 'text-neutral-500'}>
+                  {currentPrediction.total_fruits > 0
+                    ? `[PRODUCE LOCALIZED: ${currentPrediction.total_fruits} ITEM(S)]`
+                    : '[NO PRODUCE DETECTED — PRESENT FRUIT TO SENSOR]'}
+                </span>
+                <span className="text-neutral-500 font-mono">ISO 22000 OPTICAL HUD</span>
               </div>
             )}
           </div>

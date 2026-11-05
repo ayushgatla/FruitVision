@@ -29,30 +29,39 @@ PRODUCE_SET = {
     'zucchini', 'mushroom', 'cardoon', 'artichoke', 'hip', 'rose hip', 'acorn'
 }
 
+FRUIT_SURROGATES = {'ping-pong ball', 'croquet ball', 'balloon'}
+
 NON_PRODUCE_TRIGGERS = [
+    # Humans, apparel, accessories & headwear
+    'person', 'human', 'face', 'groom', 'scuba diver', 'ballplayer', 'baseball player',
+    'spectacles', 'sunglasses', 'sunglass', 'wig', 'jersey', 't-shirt', 'sweatshirt', 'suit', 'lab coat',
+    'neck brace', 'bow tie', 'necktie', 'cowboy hat', 'hair slide', 'mask', 'backpack', 'gown',
+    'cloak', 'pajama', 'jean', 'sock', 'shoe', 'sneaker', 'swimming cap', 'bathing cap',
+    'shower cap', 'face powder', 'sunscreen', 'seat belt', 'fur coat', 'cardigan', 'trench coat',
+    'maillot tank suit',
+    # Electronic devices, screens, peripherals & computing
+    'television', 'screen', 'monitor', 'web site', 'laptop', 'cellular telephone', 'phone',
+    'keyboard', 'mouse', 'desktop', 'computer', 'notebook', 'modem', 'printer', 'hard disc',
+    'remote control', 'cassette', 'tape player', 'loudspeaker', 'microphone', 'headphones',
+    # Everyday office, home & personal accessories
+    'clock', 'digital clock', 'analog clock', 'stopwatch', 'wall clock', 'timepiece',
+    'bottle', 'water bottle', 'beer bottle', 'pop bottle', 'pill bottle', 'wine bottle',
+    'cup', 'coffee mug', 'mug', 'measuring cup', 'teapot', 'pitcher', 'whiskey jug',
+    'plate', 'tray', 'soup bowl', 'saltshaker', 'pen', 'pencil', 'ballpoint pen', 'fountain pen',
+    'pencil sharpener', 'rubber eraser', 'envelope', 'packet', 'carton', 'wallet', 'purse',
+    'binder', 'comic book', 'book jacket', 'scissors', 'screwdriver', 'wrench', 'hammer', 'rule',
+    'measuring tape',
+    # Indoor furniture, architecture & room fixtures
+    'sliding door', 'window shade', 'window screen', 'shower curtain', 'wardrobe', 'couch',
+    'desk', 'dining table', 'chair', 'folding chair', 'rocking chair', 'barber chair',
+    'bookcase', 'door', 'wall', 'stone wall', 'curtain', 'pillow', 'quilt', 'doormat', 'fire screen',
+    'table lamp', 'candle', 'chimney',
     # Vehicles & wheeled devices
     'unicycle', 'bicycle', 'tricycle', 'cart', 'wheelbarrow', 'car', 'truck', 'bus', 'vehicle',
     'motorcycle', 'airplane', 'boat', 'tractor', 'trailer',
-    # Construction, industrial & architecture
+    # Construction, industrial & infrastructure
     'pier', 'dock', 'lumbermill', 'drilling platform', 'platform', 'pole', 'bridge', 'dam',
-    'scaffolding', 'crane', 'bannister', 'fence', 'building', 'tower', 'steel', 'maze',
-    'broom', 'shovel', 'rail', 'chimney', 'monolith', 'megalith',
-    # Electronics, screens & devices
-    'television', 'screen', 'monitor', 'web site', 'laptop', 'cellular telephone', 'phone',
-    'keyboard', 'mouse', 'desktop', 'computer',
-    # Humans, apparel, accessories & headwear
-    'sunglass', 'sunglasses', 'wig', 'shower cap', 'lab coat', 'sweatshirt', 'suit',
-    'jersey', 'trench coat', 'neck brace', 'bow tie', 'necktie', 'cowboy hat', 'hair slide',
-    'mask', 'backpack', 't-shirt', 'gown', 'cloak', 'pajama', 'jean', 'sock', 'shoe', 'sneaker',
-    'spectacles', 'glasses', 'swimming cap', 'bathing cap',
-    # Indoor / Furniture / Room
-    'sliding door', 'window shade', 'window screen', 'shower curtain', 'wardrobe', 'couch',
-    'desk', 'dining table', 'chair', 'bookcase', 'door', 'wall', 'room', 'curtain', 'pillow',
-    # Animals
-    'dog', 'cat', 'horse', 'bird',
-    # Everyday non-produce tools & objects
-    'clock', 'digital clock', 'analog clock', 'stopwatch', 'bottle', 'cup', 'mug',
-    'pen', 'pencil', 'scissors', 'screwdriver', 'envelope', 'packet', 'wallet'
+    'scaffolding', 'crane', 'bannister', 'fence', 'building', 'tower', 'steel', 'maze', 'broom', 'shovel', 'rail'
 ]
 
 class FruitVisionDetector:
@@ -209,11 +218,13 @@ class FruitVisionDetector:
             return False, "Complex outdoor / industrial scene detected (non-produce)", 0.97
 
         # 4. Organic fruit color ranges:
-        organic_hues = (
-            ((hsv[:,:,0] >= 0) & (hsv[:,:,0] <= 85)) | 
-            ((hsv[:,:,0] >= 160) & (hsv[:,:,0] <= 179))
-        )
-        organic_pigment = organic_hues & (hsv[:,:,1] >= 20) & non_bg
+        is_red = ((hsv[:,:,0] <= 9) | (hsv[:,:,0] >= 165)) & (hsv[:,:,1] >= 40) & (hsv[:,:,2] >= 35)
+        is_orange = (hsv[:,:,0] >= 10) & (hsv[:,:,0] <= 24) & (hsv[:,:,1] >= 45) & (hsv[:,:,2] >= 40)
+        is_yellow = (hsv[:,:,0] >= 25) & (hsv[:,:,0] <= 42) & (hsv[:,:,1] >= 40) & (hsv[:,:,2] >= 40)
+        is_green = (hsv[:,:,0] >= 35) & (hsv[:,:,0] <= 85) & (hsv[:,:,1] >= 35) & (hsv[:,:,2] >= 35)
+        is_dark_rot = (hsv[:,:,2] <= 60) & (hsv[:,:,1] >= 25) & (hsv[:,:,0] <= 30)
+
+        organic_pigment = (is_red | is_orange | is_yellow | is_green | is_dark_rot) & non_bg
 
         # Stark non-fruit synthetic colors (deep blue, cyan: Hue 90-135, Sat >= 35)
         stark_blue_cyan = (hsv[:,:,0] >= 90) & (hsv[:,:,0] <= 135) & (hsv[:,:,1] >= 35) & non_bg
@@ -226,7 +237,12 @@ class FruitVisionDetector:
         if organic_ratio < 0.08:
             return False, "Missing biological produce pigments", 0.97
 
-        # 5. Zero-shot ImageNet Check
+        # 5. Human Skin / Portrait Detection in YCrCb
+        ycrcb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2YCrCb)
+        skin_mask = (ycrcb[:,:,1] >= 130) & (ycrcb[:,:,1] <= 175) & (ycrcb[:,:,2] >= 75) & (ycrcb[:,:,2] <= 130) & (hsv[:,:,1] < 100)
+        skin_ratio = float(np.sum(skin_mask)) / max(total_pixels, 1)
+
+        # 6. Zero-shot ImageNet Check
         if self.imagenet_model is not None and self.imagenet_cats:
             try:
                 img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
@@ -238,21 +254,37 @@ class FruitVisionDetector:
                 top_cat = self.imagenet_cats[top_idx.item()].lower()
 
                 top5_indices = torch.topk(out, 5).indices.tolist()
-                has_produce_in_top5 = any(self.imagenet_cats[idx].lower() in PRODUCE_SET for idx in top5_indices)
+                top5_cats = [self.imagenet_cats[idx].lower() for idx in top5_indices]
+                top5_probs = [out[idx].item() for idx in top5_indices]
+
+                has_produce = any(cat in PRODUCE_SET or cat in FRUIT_SURROGATES for cat in top5_cats)
+
+                # Round spherical shape surrogates (e.g. bruised apples look like analog clock or gong)
+                is_round_surrogate = any(s in top_cat for s in ['analog clock', 'wall clock', 'clock', 'gong', 'chime', 'balloon', 'golf ball'])
+                if is_round_surrogate and organic_ratio >= 0.22:
+                    has_produce = True
+
                 is_top1_non_produce = any(trigger in top_cat for trigger in NON_PRODUCE_TRIGGERS)
 
                 non_produce_top5_sum = sum(
-                    out[idx].item() for idx in top5_indices 
-                    if any(trig in self.imagenet_cats[idx].lower() for trig in NON_PRODUCE_TRIGGERS)
+                    prob for prob, cat in zip(top5_probs, top5_cats) 
+                    if any(trig in cat for trig in NON_PRODUCE_TRIGGERS)
                 )
 
-                if not has_produce_in_top5:
-                    if is_top1_non_produce and top_prob.item() >= 0.28:
+                if not has_produce:
+                    if skin_ratio >= 0.10:
+                        return False, "Identified human subject / skin tone (non-produce)", 0.98
+                    if is_top1_non_produce and top_prob.item() >= 0.12:
                         return False, f"Identified non-fruit object ({top_cat})", float(round(max(0.95, top_prob.item()), 4))
-                    if non_produce_top5_sum >= 0.50:
+                    if non_produce_top5_sum >= 0.22:
                         return False, f"Identified non-fruit scene ({top_cat})", float(round(max(0.95, non_produce_top5_sum), 4))
             except Exception:
                 pass
+
+        if skin_ratio >= 0.20:
+            return False, "Predominantly human skin tone (non-produce)", 0.98
+
+        return True, "Organic fruit verified", 0.98
 
         return True, "Organic fruit verified", 0.98
 
@@ -400,6 +432,63 @@ class FruitVisionDetector:
                 boxes.append((8, 8, w - 8, h - 8))
 
         # Sort boxes left-to-right
+        boxes.sort(key=lambda b: b[0])
+        return boxes
+
+    def find_fruit_boxes_live(self, img_bgr: np.ndarray, min_area_ratio: float = 0.012, max_area_ratio: float = 0.75) -> List[Tuple[int, int, int, int]]:
+        """
+        Segment and localize bounding boxes for live webcam / camera feeds.
+        Suppresses human skin, ambient room clutter, and background walls.
+        Isolates saturated organic produce candidates (Apples, Oranges, Bananas, etc.).
+        Returns empty list [] if no produce item is held in front of the lens.
+        """
+        h, w = img_bgr.shape[:2]
+        total_area = h * w
+        min_area = int(total_area * min_area_ratio)
+        max_area = int(total_area * max_area_ratio)
+
+        hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+        ycrcb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2YCrCb)
+        cr, cb = ycrcb[:, :, 1], ycrcb[:, :, 2]
+
+        # Suppress human skin cluster with low/moderate saturation
+        skin_mask = (cr >= 130) & (cr <= 175) & (cb >= 75) & (cb <= 130) & (hsv[:, :, 1] < 110)
+
+        hue, sat, val = hsv[:, :, 0], hsv[:, :, 1], hsv[:, :, 2]
+
+        # Target vibrant fruit pigment bands
+        is_red = ((hue <= 9) | (hue >= 165)) & (sat >= 50) & (val >= 35)
+        is_orange = (hue >= 10) & (hue <= 24) & (sat >= 55) & (val >= 40)
+        is_yellow = (hue >= 25) & (hue <= 42) & (sat >= 50) & (val >= 40)
+        is_green = (hue >= 35) & (hue <= 85) & (sat >= 45) & (val >= 35)
+        is_dark_rot = (val <= 60) & (sat >= 25) & (hue <= 30)
+
+        fruit_pixels = (is_red | is_orange | is_yellow | is_green | is_dark_rot) & (~skin_mask)
+        mask = fruit_pixels.astype(np.uint8) * 255
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=2)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+
+        cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        boxes = []
+        for c in cnts:
+            area = cv2.contourArea(c)
+            if min_area <= area <= max_area:
+                hull = cv2.convexHull(c)
+                solidity = float(area) / max(1, cv2.contourArea(hull))
+                if solidity >= 0.45:
+                    x, y, bw, bh = cv2.boundingRect(c)
+                    pad_x = int(bw * 0.05)
+                    pad_y = int(bh * 0.05)
+                    boxes.append((
+                        max(0, x - pad_x),
+                        max(0, y - pad_y),
+                        min(w, x + bw + pad_x),
+                        min(h, y + bh + pad_y)
+                    ))
+
+        # Sort left-to-right
         boxes.sort(key=lambda b: b[0])
         return boxes
 
