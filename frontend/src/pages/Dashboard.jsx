@@ -79,7 +79,7 @@ export default function Dashboard({
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">
                 Quality Acceptance Trajectory
               </h3>
-              <p className="text-[10px] text-neutral-500">Daily optical inspection performance (7 days)</p>
+              <p className="text-[10px] text-neutral-500">Batch optical inspection performance (from Oct 25)</p>
             </div>
             <span className="text-[11px] text-neutral-400 border border-neutral-800 px-2 py-0.5">
               AVG: {acceptanceRate}%
@@ -91,16 +91,18 @@ export default function Dashboard({
               <LineChart data={analytics?.daily_trends || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid stroke="#222222" strokeDasharray="2 2" />
                 <XAxis dataKey="date" stroke="#666666" fontSize={10} tickLine={false} />
-                <YAxis stroke="#666666" fontSize={10} tickLine={false} domain={[70, 100]} />
+                <YAxis stroke="#666666" fontSize={10} tickLine={false} domain={[85, 100]} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#000000', borderColor: '#444444', borderRadius: '0px', fontSize: '11px', color: '#ffffff' }}
+                  formatter={(val, name) => [`${val}%`, 'Acceptance Rate']}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="acceptance_rate" 
                   stroke="#ffffff" 
                   strokeWidth={2}
-                  dot={{ r: 2, fill: '#ffffff' }}
+                  dot={{ r: 3, fill: '#ffffff', stroke: '#000000', strokeWidth: 1 }}
+                  activeDot={{ r: 5, fill: '#ffffff' }}
                   name="Acceptance %"
                 />
               </LineChart>

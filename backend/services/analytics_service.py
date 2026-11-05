@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, case
 from typing import Dict, Any, List
 
 from backend.database.models import FruitInspection
@@ -53,31 +53,40 @@ def get_analytics_metrics(db: Session) -> Dict[str, Any]:
         FruitInspection.inspection_timestamp >= today_start
     ).count()
 
-    # 7-day trend analysis
+    # Dynamic batch / daily trend analysis from DB starting from Oct 25
+    trend_rows = (
+        db.query(
+            func.date(FruitInspection.inspection_timestamp).label("insp_date"),
+            func.count(FruitInspection.id).label("total"),
+            func.sum(case((FruitInspection.predicted_class == 'Good', 1), else_=0)).label("good"),
+            func.sum(case((FruitInspection.predicted_class.in_(['Damaged', 'Rotten']), 1), else_=0)).label("defects")
+        )
+        .filter(FruitInspection.inspection_timestamp >= datetime(2026, 10, 25, 0, 0, 0))
+        .group_by(func.date(FruitInspection.inspection_timestamp))
+        .order_by(func.date(FruitInspection.inspection_timestamp))
+        .all()
+    )
+
     trends = []
-    for i in range(6, -1, -1):
-        day_date = (datetime.utcnow() - timedelta(days=i)).date()
-        start = datetime.combine(day_date, datetime.min.time())
-        end = datetime.combine(day_date, datetime.max.time())
-
-        day_total = db.query(FruitInspection).filter(
-            FruitInspection.inspection_timestamp >= start,
-            FruitInspection.inspection_timestamp <= end
-        ).count()
-
-        day_good = db.query(FruitInspection).filter(
-            FruitInspection.inspection_timestamp >= start,
-            FruitInspection.inspection_timestamp <= end,
-            FruitInspection.predicted_class == "Good"
-        ).count()
-
-        day_rate = round((day_good / day_total * 100), 1) if day_total > 0 else 92.5
+    for r in trend_rows:
+        d_str, total, good, defects = r
+        if not d_str:
+            continue
+        good = good or 0
+        defects = defects or 0
+        total = total or 0
+        valid_produce = good + defects
+        rate = round((good / max(1, valid_produce)) * 100, 1) if valid_produce > 0 else 100.0
+        dt = datetime.strptime(d_str, "%Y-%m-%d")
         trends.append({
-            "date": day_date.strftime("%b %d"),
-            "acceptance_rate": day_rate,
-            "inspections": max(day_total, 12 if i > 0 else day_total),
-            "defects": day_total - day_good if day_total > 0 else 1
+            "date": dt.strftime("%b %d"),
+            "acceptance_rate": rate,
+            "inspections": total,
+            "defects": defects
         })
+
+    if not trends:
+        trends = generate_placeholder_trends()
 
     class_distribution = [
         {"name": "Good (Passed)", "count": good_count, "pct": acceptance_rate},

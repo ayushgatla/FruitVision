@@ -103,7 +103,7 @@ export default function Analytics({ analytics }) {
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
               Inspections vs Defects
             </h3>
-            <span className="text-[10px] text-neutral-500">7-DAY VOLUME</span>
+            <span className="text-[10px] text-neutral-500">BATCH VOLUME (FROM OCT 25)</span>
           </div>
           
           <div className="h-60 w-full">
@@ -131,7 +131,7 @@ export default function Analytics({ analytics }) {
             <h3 className="text-xs font-bold uppercase tracking-wider text-white">
               Quality Acceptance Trajectory
             </h3>
-            <span className="text-[10px] text-neutral-500">PERCENTAGE %</span>
+            <span className="text-[10px] text-neutral-500">PERCENTAGE % (FROM OCT 25)</span>
           </div>
 
           <div className="h-60 w-full">
@@ -139,16 +139,18 @@ export default function Analytics({ analytics }) {
               <LineChart data={analytics?.daily_trends || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid stroke="#222222" strokeDasharray="2 2" />
                 <XAxis dataKey="date" stroke="#666666" fontSize={10} tickLine={false} />
-                <YAxis stroke="#666666" fontSize={10} tickLine={false} domain={[70, 100]} />
+                <YAxis stroke="#666666" fontSize={10} tickLine={false} domain={[85, 100]} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#000000', borderColor: '#444444', borderRadius: '0px', fontSize: '11px', color: '#ffffff' }}
+                  formatter={(val, name) => [`${val}%`, 'Acceptance Rate']}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="acceptance_rate" 
                   stroke="#ffffff" 
                   strokeWidth={2}
-                  dot={{ r: 3, fill: '#ffffff' }}
+                  dot={{ r: 3, fill: '#ffffff', stroke: '#000000', strokeWidth: 1 }}
+                  activeDot={{ r: 5, fill: '#ffffff' }}
                   name="Acceptance Rate %"
                 />
               </LineChart>

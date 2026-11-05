@@ -98,6 +98,15 @@ npm run dev
 
 ---
 
+#### 4. Seed Realistic Testing Data (Optional)
+To populate or reset the database with realistic industrial optical inspection batches spanning from October 25 (with 1-2 day operational skips in between):
+
+```bash
+python backend/scripts/seed_test_data.py
+```
+
+---
+
 ## Running Model Training & Evaluation
 
 ### Local Model Calibration
